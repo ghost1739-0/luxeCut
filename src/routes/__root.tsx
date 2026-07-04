@@ -1,3 +1,4 @@
+/// <reference types="vite-plugin-pwa/client" />
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -71,10 +72,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Maison Barber" },
       { name: "twitter:card", content: "summary_large_image" },
+      // PWA için eklenenler
+      { name: "theme-color", content: "#1a1a1a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Maison Barber" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      // PWA için eklenenler (vite-plugin-pwa manifest.webmanifest üretiyor, .json değil)
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
     scripts: [{
       type: "application/ld+json",
@@ -116,6 +125,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    // Service worker'ı garantiye almak için manuel kayıt
+    // (vite-plugin-pwa'nın otomatik enjeksiyonu SSR'da her zaman tetiklenmeyebilir)
+    import("virtual:pwa-register")
+      .then(({ registerSW }) => {
+        registerSW({ immediate: true });
+      })
+      .catch((err) => {
+        console.error("Service worker kaydı başarısız:", err);
+      });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
