@@ -9,7 +9,7 @@ export default defineConfig({
     plugins: [
       VitePWA({
         registerType: "autoUpdate",
-        // Canlıda tüm ikonların asset olarak tanınması için buraya ekledik
+        outDir: ".output/public",
         includeAssets: ["favicon.ico", "pwa-192x192.png", "pwa-512x512.png"],
         manifest: {
           name: "Maison Barber Admin",
