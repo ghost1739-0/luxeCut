@@ -9,7 +9,7 @@ export default defineConfig({
     plugins: [
       VitePWA({
         registerType: "autoUpdate",
-        outDir: ".output/public",
+        outDir: process.env.VERCEL ? ".vercel/output/static" : ".output/public",
         includeAssets: ["favicon.ico", "pwa-192x192.png", "pwa-512x512.png"],
         manifest: {
           name: "Maison Barber Admin",
