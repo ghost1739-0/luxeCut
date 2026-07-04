@@ -1,0 +1,445 @@
+{
+  "appointments": [
+    {
+      "id": "935ddffd-1d7d-4160-b546-986bde8a5f66",
+      "customer_id": null,
+      "barber_id": "75723575-4a6f-4057-9998-fe8323eca103",
+      "service_ids": [
+        "2e7e7ac5-a74d-4444-9e79-2b878e95008a"
+      ],
+      "customer_name": "Eren TANRIVER",
+      "customer_phone": "5388749219",
+      "customer_email": "erentanriver39@gmail.com",
+      "notes": "zelksmlar",
+      "appointment_date": "2026-07-11",
+      "start_time": "12:00:00",
+      "end_time": "12:30:00",
+      "total_price": 350,
+      "total_duration": 30,
+      "status": "cancelled",
+      "qr_code": "d47891aa-e988-442b-99cb-a79cb2afd4e6",
+      "coupon_code": null,
+      "discount": 0,
+      "created_at": "2026-07-03T12:58:46.88171+00:00",
+      "updated_at": "2026-07-03T13:32:51.221851+00:00",
+      "reminder_sent_at": null
+    },
+    {
+      "id": "1fc84d95-ae41-497e-a7ea-3ad32b2eb1a2",
+      "customer_id": null,
+      "barber_id": null,
+      "service_ids": [
+        "fc4fc588-966c-4533-b948-80b0d996a76e",
+        "aa5834c0-b24c-4988-8fec-e658e0f7aa76"
+      ],
+      "customer_name": "ansıdası asdsadas",
+      "customer_phone": "5111111111",
+      "customer_email": null,
+      "notes": "kesi ngeliyom",
+      "appointment_date": "2026-07-03",
+      "start_time": "18:00:00",
+      "end_time": "19:30:00",
+      "total_price": 750,
+      "total_duration": 90,
+      "status": "approved",
+      "qr_code": "aaf689c6-89b7-4949-b9e1-8257769cebcb",
+      "coupon_code": null,
+      "discount": 0,
+      "created_at": "2026-07-03T13:35:56.272288+00:00",
+      "updated_at": "2026-07-03T13:36:44.800989+00:00",
+      "reminder_sent_at": null
+    },
+    {
+      "id": "f98adb74-0fa6-4fe9-b34b-67dd88aaa904",
+      "customer_id": null,
+      "barber_id": "152b82e2-f587-4a4a-a475-edc6a40b4c58",
+      "service_ids": [
+        "2e7e7ac5-a74d-4444-9e79-2b878e95008a"
+      ],
+      "customer_name": "Eren TANRIVER",
+      "customer_phone": "5388749219",
+      "customer_email": "erentanriver39@gmail.com",
+      "notes": "sa",
+      "appointment_date": "2026-07-11",
+      "start_time": "12:30:00",
+      "end_time": "13:00:00",
+      "total_price": 350,
+      "total_duration": 30,
+      "status": "approved",
+      "qr_code": "f0dadd00-955a-4578-b25a-8069b2083af2",
+      "coupon_code": null,
+      "discount": 0,
+      "created_at": "2026-07-03T20:35:55.201438+00:00",
+      "updated_at": "2026-07-04T10:47:01.471936+00:00",
+      "reminder_sent_at": null
+    },
+    {
+      "id": "7e575991-3c3f-437c-805c-7a7745d427b7",
+      "customer_id": null,
+      "barber_id": "152b82e2-f587-4a4a-a475-edc6a40b4c58",
+      "service_ids": [
+        "2e7e7ac5-a74d-4444-9e79-2b878e95008a"
+      ],
+      "customer_name": "Eren TANRIVER",
+      "customer_phone": "5388749219",
+      "customer_email": "erentanriver39@gmail.com",
+      "notes": "sa",
+      "appointment_date": "2026-07-10",
+      "start_time": "12:30:00",
+      "end_time": "13:00:00",
+      "total_price": 350,
+      "total_duration": 30,
+      "status": "approved",
+      "qr_code": "0c6f59b6-ac5b-4b2e-a6d6-4f335d7171ee",
+      "coupon_code": null,
+      "discount": 0,
+      "created_at": "2026-07-03T22:00:26.934596+00:00",
+      "updated_at": "2026-07-04T10:47:01.86262+00:00",
+      "reminder_sent_at": null
+    },
+    {
+      "id": "1c719bb7-e6fb-42a1-87db-5dbed7455e82",
+      "customer_id": null,
+      "barber_id": "75723575-4a6f-4057-9998-fe8323eca103",
+      "service_ids": [
+        "1d14fac8-dedf-4701-9e50-0aea962415bb"
+      ],
+      "customer_name": "Eren TANRIVER",
+      "customer_phone": "7273828291919",
+      "customer_email": "erentanriver39@gmail.com",
+      "notes": "Gelicem abj",
+      "appointment_date": "2026-07-07",
+      "start_time": "18:30:00",
+      "end_time": "19:00:00",
+      "total_price": 250,
+      "total_duration": 30,
+      "status": "cancelled",
+      "qr_code": "158efd94-0486-4873-a638-97c7a4e9223a",
+      "coupon_code": null,
+      "discount": 0,
+      "created_at": "2026-07-03T21:01:21.515274+00:00",
+      "updated_at": "2026-07-04T10:47:02.527742+00:00",
+      "reminder_sent_at": null
+    }
+  ],
+  "barbers": [
+    {
+      "id": "152b82e2-f587-4a4a-a475-edc6a40b4c58",
+      "user_id": null,
+      "full_name": "Mehmet Usta",
+      "bio_tr": "Klasik tıraş ustası, 20 yıllık tecrübe",
+      "bio_en": "Master of classic shaves, 20 years experience",
+      "specialties": [
+        "Klasik Kesim",
+        "Sakal Tıraşı"
+      ],
+      "years_experience": 20,
+      "rating": 4.95,
+      "avatar_url": null,
+      "is_active": true,
+      "sort_order": 1,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "f5685697-f3fd-41ea-b727-fbe2414ce029",
+      "user_id": null,
+      "full_name": "Ahmet Bey",
+      "bio_tr": "Modern stil uzmanı",
+      "bio_en": "Modern style specialist",
+      "specialties": [
+        "Fade",
+        "Modern Kesim"
+      ],
+      "years_experience": 12,
+      "rating": 4.9,
+      "avatar_url": null,
+      "is_active": true,
+      "sort_order": 2,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "75723575-4a6f-4057-9998-fe8323eca103",
+      "user_id": null,
+      "full_name": "Emre Barber",
+      "bio_tr": "Boyama ve stil danışmanı",
+      "bio_en": "Coloring and style consultant",
+      "specialties": [
+        "Boyama",
+        "Saç Bakımı"
+      ],
+      "years_experience": 8,
+      "rating": 4.85,
+      "avatar_url": null,
+      "is_active": true,
+      "sort_order": 3,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "939c41fb-74bd-45ea-b928-781f666ed413",
+      "user_id": null,
+      "full_name": "Kaan Master",
+      "bio_tr": "Yüz bakımı ve sakal tasarımı",
+      "bio_en": "Facial treatments and beard design",
+      "specialties": [
+        "Yüz Bakımı",
+        "Sakal"
+      ],
+      "years_experience": 10,
+      "rating": 4.92,
+      "avatar_url": null,
+      "is_active": true,
+      "sort_order": 4,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    }
+  ],
+  "coupons": [],
+  "holidays": [],
+  "profiles": [
+    {
+      "id": "ec358e8d-e0cc-49c8-960d-205d4d4c4cc6",
+      "full_name": "eren tanrıver",
+      "phone": "",
+      "email": "erentanriver39@gmail.com",
+      "avatar_url": null,
+      "loyalty_points": 0,
+      "created_at": "2026-07-03T12:56:24.782896+00:00",
+      "updated_at": "2026-07-03T12:56:24.782896+00:00"
+    },
+    {
+      "id": "0b0bb601-2fbb-4f1f-9cc1-4db1175f1fdf",
+      "full_name": "eren",
+      "phone": "",
+      "email": "valorantyeni3939@gmail.com",
+      "avatar_url": null,
+      "loyalty_points": 0,
+      "created_at": "2026-07-03T15:35:32.334709+00:00",
+      "updated_at": "2026-07-03T15:35:32.334709+00:00"
+    },
+    {
+      "id": "712c9d23-00fd-426d-ae4c-bd7d51242fb0",
+      "full_name": "selamlar",
+      "phone": "",
+      "email": "selamlar@gmail.com",
+      "avatar_url": null,
+      "loyalty_points": 0,
+      "created_at": "2026-07-03T22:31:59.56475+00:00",
+      "updated_at": "2026-07-03T22:31:59.56475+00:00"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "c35bea60-d008-4770-8ad0-c641d1a4917f",
+      "barber_id": null,
+      "customer_name": "Ali Y.",
+      "rating": 5,
+      "comment": "İstanbul'un en iyi berberi. Kesinlikle tavsiye ederim.",
+      "is_approved": true,
+      "created_at": "2026-07-02T20:06:28.274734+00:00",
+      "service_id": null
+    },
+    {
+      "id": "0aa431a1-7cc6-48ba-a00b-b9cf9897cb77",
+      "barber_id": null,
+      "customer_name": "Can K.",
+      "rating": 5,
+      "comment": "Atmosfer harika, hizmet mükemmel. Her ay geliyorum.",
+      "is_approved": true,
+      "created_at": "2026-07-02T20:06:28.274734+00:00",
+      "service_id": null
+    },
+    {
+      "id": "13b30ac2-490d-458d-8e03-395e904528f1",
+      "barber_id": null,
+      "customer_name": "Burak S.",
+      "rating": 5,
+      "comment": "Sakal tıraşı efsane. Ustaların işine hakimiyeti üst düzey.",
+      "is_approved": true,
+      "created_at": "2026-07-02T20:06:28.274734+00:00",
+      "service_id": null
+    },
+    {
+      "id": "62169750-a35d-4269-ac87-d8dea7972b7e",
+      "barber_id": null,
+      "customer_name": "Deniz M.",
+      "rating": 5,
+      "comment": "Lüks bir deneyim yaşadım. Fiyatına değer.",
+      "is_approved": true,
+      "created_at": "2026-07-02T20:06:28.274734+00:00",
+      "service_id": null
+    },
+    {
+      "id": "097cf018-fbf3-44b4-917f-348305af3d80",
+      "barber_id": "939c41fb-74bd-45ea-b928-781f666ed413",
+      "customer_name": "Mehmet",
+      "rating": 5,
+      "comment": "Çok güzel sohbeti muhabbeti",
+      "is_approved": true,
+      "created_at": "2026-07-04T10:46:42.606214+00:00",
+      "service_id": "aa5834c0-b24c-4988-8fec-e658e0f7aa76"
+    },
+    {
+      "id": "f102a73c-bd0d-4d8e-8bae-2b85af9db213",
+      "barber_id": "75723575-4a6f-4057-9998-fe8323eca103",
+      "customer_name": "Ahme A.",
+      "rating": 5,
+      "comment": "Harika",
+      "is_approved": true,
+      "created_at": "2026-07-04T12:13:30.088479+00:00",
+      "service_id": "2e7e7ac5-a74d-4444-9e79-2b878e95008a"
+    }
+  ],
+  "services": [
+    {
+      "id": "2e7e7ac5-a74d-4444-9e79-2b878e95008a",
+      "name_tr": "Klasik Saç Kesimi",
+      "name_en": "Classic Haircut",
+      "description_tr": "Ustaların elinden geleneksel saç kesimi",
+      "description_en": "Traditional cut by our master barbers",
+      "category": "haircut",
+      "duration_minutes": 30,
+      "price": 350,
+      "image_url": null,
+      "is_active": true,
+      "sort_order": 1,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "1d14fac8-dedf-4701-9e50-0aea962415bb",
+      "name_tr": "Sakal Tıraşı",
+      "name_en": "Beard Shave",
+      "description_tr": "Sıcak havlu ve jilet ile lüks sakal tıraşı",
+      "description_en": "Hot-towel straight razor beard shave",
+      "category": "beard",
+      "duration_minutes": 30,
+      "price": 250,
+      "image_url": null,
+      "is_active": true,
+      "sort_order": 2,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "aa5834c0-b24c-4988-8fec-e658e0f7aa76",
+      "name_tr": "Saç + Sakal Combo",
+      "name_en": "Cut + Beard Combo",
+      "description_tr": "Komple bakım paketi",
+      "description_en": "The complete grooming package",
+      "category": "combo",
+      "duration_minutes": 60,
+      "price": 550,
+      "image_url": null,
+      "is_active": true,
+      "sort_order": 3,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "aa71a541-485d-4852-973f-eb8712fcc77b",
+      "name_tr": "Yüz Bakımı",
+      "name_en": "Facial Treatment",
+      "description_tr": "Derin temizlik ve nemlendirme",
+      "description_en": "Deep clean and hydration",
+      "category": "skincare",
+      "duration_minutes": 45,
+      "price": 450,
+      "image_url": null,
+      "is_active": true,
+      "sort_order": 4,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "41689be4-82db-40f1-a3e8-72817905e94c",
+      "name_tr": "Saç Boyama",
+      "name_en": "Hair Coloring",
+      "description_tr": "Premium ürünlerle profesyonel boyama",
+      "description_en": "Professional coloring with premium products",
+      "category": "color",
+      "duration_minutes": 90,
+      "price": 800,
+      "image_url": null,
+      "is_active": true,
+      "sort_order": 5,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    },
+    {
+      "id": "fc4fc588-966c-4533-b948-80b0d996a76e",
+      "name_tr": "Çocuk Kesimi",
+      "name_en": "Kids Haircut",
+      "description_tr": "12 yaş altı çocuklar için",
+      "description_en": "For children under 12",
+      "category": "haircut",
+      "duration_minutes": 30,
+      "price": 200,
+      "image_url": null,
+      "is_active": true,
+      "sort_order": 6,
+      "created_at": "2026-07-02T20:06:28.274734+00:00"
+    }
+  ],
+  "user_roles": [
+    {
+      "id": "27ae377d-879f-4ea9-8a83-106338d0ad7e",
+      "user_id": "ec358e8d-e0cc-49c8-960d-205d4d4c4cc6",
+      "role": "admin"
+    },
+    {
+      "id": "34c33ce5-37ba-41fe-bba4-f83304317f40",
+      "user_id": "0b0bb601-2fbb-4f1f-9cc1-4db1175f1fdf",
+      "role": "customer"
+    },
+    {
+      "id": "e59a4d7b-e955-404d-8ea7-2dc158f407b9",
+      "user_id": "712c9d23-00fd-426d-ae4c-bd7d51242fb0",
+      "role": "customer"
+    }
+  ],
+  "working_hours": [
+    {
+      "id": "2ff09e84-3a87-4d5e-a599-2c1f94f0eef6",
+      "day_of_week": 1,
+      "open_time": "09:00:00",
+      "close_time": "20:00:00",
+      "is_closed": false
+    },
+    {
+      "id": "59d5ade5-ec2c-4c28-ab7b-4b9799793696",
+      "day_of_week": 2,
+      "open_time": "09:00:00",
+      "close_time": "20:00:00",
+      "is_closed": false
+    },
+    {
+      "id": "1c124c0d-4ae3-46de-86ef-5d8d3593c642",
+      "day_of_week": 3,
+      "open_time": "09:00:00",
+      "close_time": "20:00:00",
+      "is_closed": false
+    },
+    {
+      "id": "cde4b284-e16a-4eb1-89e4-6776bd7acd05",
+      "day_of_week": 4,
+      "open_time": "09:00:00",
+      "close_time": "20:00:00",
+      "is_closed": false
+    },
+    {
+      "id": "255f1fee-0af3-4ce5-81ee-175e66d5c0fc",
+      "day_of_week": 5,
+      "open_time": "09:00:00",
+      "close_time": "20:00:00",
+      "is_closed": false
+    },
+    {
+      "id": "43cf0edb-612a-4331-bc13-410a600c6073",
+      "day_of_week": 6,
+      "open_time": "09:00:00",
+      "close_time": "20:00:00",
+      "is_closed": false
+    },
+    {
+      "id": "f84d6099-0174-4bae-b35e-902f4dd9ea71",
+      "day_of_week": 0,
+      "open_time": "09:00:00",
+      "close_time": "20:00:00",
+      "is_closed": false
+    }
+  ]
+}
