@@ -18,8 +18,8 @@ export default defineConfig({
           theme_color: "#0a0a0a",
           background_color: "#0a0a0a",
           display: "standalone",
-          scope: "/admin?v=2",
-          start_url: "/admin?v=2",
+          scope: "/admin",
+          start_url: "/admin",
           icons: [
             {
               src: "/pwa-192x192.png", // Canlı için / işareti şart
