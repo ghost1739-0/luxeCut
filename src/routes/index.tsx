@@ -48,44 +48,50 @@ function Home() {
 
         <div className="container-luxe pt-32 pb-20">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }} className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-px w-12 bg-gold" />
-              <span className="text-xs uppercase tracking-[0.3em] text-gold">{t("hero.tag")}</span>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="stamp-badge h-14 w-14 shrink-0">
+                <div className="stamp-badge-ring absolute inset-1" />
+                <span className="font-mono text-[10px] leading-tight text-gold text-center">
+                  EST.<br />2014
+                </span>
+              </div>
+              <div className="h-px flex-1 max-w-[6rem] bg-gold/40" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-gold/90">{t("hero.tag")}</span>
             </div>
-            <h1 className="font-display text-5xl md:text-7xl leading-[1.05] mb-6">
-              <span className="text-foreground">Ustalıkla</span>
+            <h1 className="font-display text-5xl md:text-7xl leading-[1.08] mb-6">
+              <span className="text-foreground">Ustalıkla</span>{" "}
+              <span className="text-gradient-gold italic font-medium">işlenmiş</span>
               <br />
-              <span className="text-gradient-gold italic">İşlenmiş</span>{" "}
-              <span className="text-foreground">Zarafet</span>
+              <span className="text-foreground">zarafet.</span>
             </h1>
-            <p className="text-lg text-foreground/70 leading-relaxed mb-10 max-w-xl">
+            <p className="text-lg text-foreground/65 leading-relaxed mb-10 max-w-xl">
               {t("hero.sub")}
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Link to="/book" className="btn-gold hover:[&]:btn-gold-hover px-8 py-4 rounded-full text-sm uppercase tracking-widest inline-flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-6">
+              <Link to="/book" className="btn-gold hover:[&]:btn-gold-hover px-8 py-4 text-sm uppercase tracking-widest inline-flex items-center gap-2">
                 {t("hero.cta")} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/services" className="px-8 py-4 rounded-full text-sm uppercase tracking-widest border border-gold/40 text-foreground hover:border-gold hover:text-gold transition-colors">
+              <Link to="/services" className="text-sm uppercase tracking-widest text-foreground/70 hover:text-gold transition-colors border-b border-gold/30 hover:border-gold pb-1">
                 {t("hero.cta2")}
               </Link>
             </div>
           </motion.div>
         </div>
 
-        {/* Floating info card */}
+        {/* Fitting-ticket info card */}
         <motion.div
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="hidden lg:block absolute bottom-16 right-8 glass-panel rounded-2xl p-6 max-w-xs"
+          className="hidden lg:block absolute bottom-16 right-8 glass-panel p-6 max-w-xs"
         >
-          <div className="flex items-center gap-2 text-gold mb-2">
-            <Sparkles className="h-4 w-4" />
-            <span className="text-xs uppercase tracking-widest">Bugün açığız</span>
+          <div className="flex items-center justify-between text-gold mb-4">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">No. 01 — Bugün</span>
+            <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <p className="font-display text-2xl">09:00 – 20:00</p>
+          <p className="font-display text-3xl italic">09:00 – 20:00</p>
           <div className="gold-divider my-4" />
-          <p className="text-sm text-foreground/70">Anında online randevu — 30 sn'de tamamla.</p>
+          <p className="text-sm text-foreground/60 leading-relaxed">Anında online randevu — 30 saniyede tamamla.</p>
         </motion.div>
       </section>
 
@@ -93,39 +99,54 @@ function Home() {
       <section className="py-24 relative">
         <div className="container-luxe">
           <SectionHeader eyebrow="Hizmetler" title={t("sec.services")} sub={t("sec.services.sub")} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16">
-            {services.slice(0, 6).map((s, i) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="glass-panel rounded-2xl overflow-hidden group hover:border-gold/40 transition-all"
+          {/* Fitting ticket: two curated images flank a menu-style order form */}
+          <div className="grid lg:grid-cols-[0.85fr_1.15fr] gap-10 mt-16 items-start">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="aspect-[3/4] overflow-hidden mt-8">
+                <img src={serviceShave} alt="Tıraş" loading="lazy" className="w-full h-full object-cover" />
+              </div>
+              <div className="aspect-[3/4] overflow-hidden">
+                <img src={serviceCut} alt="Saç kesimi" loading="lazy" className="w-full h-full object-cover" />
+              </div>
+            </div>
+
+            <div className="glass-panel p-8 md:p-10">
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-dashed border-gold/25">
+                <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-gold/80">Fitting Ticket</span>
+                <span className="font-mono text-[11px] text-muted-foreground">No. 0{services.length || 6}</span>
+              </div>
+              <ul>
+                {services.slice(0, 6).map((s, i) => (
+                  <motion.li
+                    key={s.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.06 }}
+                    className="py-4 border-b border-border/40 last:border-0"
+                  >
+                    <div className="ticket-line">
+                      <h3 className="font-display text-lg shrink-0">{lang === "tr" ? s.name_tr : s.name_en}</h3>
+                      <span className="font-mono text-gold text-sm shrink-0">₺{Number(s.price).toFixed(0)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <p className="text-sm text-muted-foreground line-clamp-1 pr-4">
+                        {lang === "tr" ? s.description_tr : s.description_en}
+                      </p>
+                      <span className="text-xs text-muted-foreground inline-flex items-center gap-1 shrink-0">
+                        <Clock className="h-3 w-3" /> {s.duration_minutes} {t("book.min")}
+                      </span>
+                    </div>
+                  </motion.li>
+                ))}
+              </ul>
+              <Link
+                to="/book"
+                className="mt-8 btn-gold hover:[&]:btn-gold-hover w-full px-6 py-3.5 text-sm uppercase tracking-widest inline-flex items-center justify-center gap-2"
               >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={i % 2 === 0 ? serviceShave : serviceCut}
-                    alt={lang === "tr" ? s.name_tr : s.name_en}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <h3 className="font-display text-xl">{lang === "tr" ? s.name_tr : s.name_en}</h3>
-                    <span className="text-gold font-semibold whitespace-nowrap">₺{Number(s.price).toFixed(0)}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {lang === "tr" ? s.description_tr : s.description_en}
-                  </p>
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-                    <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {s.duration_minutes} {t("book.min")}</span>
-                    <Link to="/book" className="text-xs uppercase tracking-widest text-gold hover:underline">Ekle →</Link>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                {t("hero.cta")} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -144,7 +165,7 @@ function Home() {
                 transition={{ delay: i * 0.08 }}
                 className="group"
               >
-                <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
                   <img
                     src={barberAvatars[i % barberAvatars.length]}
                     alt={b.full_name}
@@ -179,7 +200,7 @@ function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="glass-panel rounded-2xl p-6"
+                className="glass-panel rounded-sm p-6"
               >
                 <div className="flex gap-1 mb-3">
                   {Array.from({ length: r.rating }).map((_, k) => (
@@ -199,28 +220,28 @@ function Home() {
       <section className="py-24 bg-onyx/50 border-y border-border/40">
         <div className="container-luxe grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="font-display text-4xl mb-6">{t("sec.hours")}</h2>
-            <ul className="space-y-2 text-foreground/80">
+            <h2 className="font-display text-4xl italic mb-6">{t("sec.hours")}</h2>
+            <ul className="space-y-1 text-foreground/80">
               {[
                 ["Pazartesi – Cumartesi", "09:00 – 20:00"],
                 ["Pazar", t("days.closed")],
               ].map(([d, h]) => (
-                <li key={d} className="flex justify-between border-b border-border/40 py-3">
+                <li key={d} className="ticket-line border-b border-border/30 py-3">
                   <span>{d}</span>
-                  <span className="text-gold">{h}</span>
+                  <span className="font-mono text-gold text-sm">{h}</span>
                 </li>
               ))}
             </ul>
             <div className="mt-8 flex flex-wrap gap-4">
-              <a href="tel:+902120000000" className="btn-gold px-6 py-3 rounded-full text-sm inline-flex items-center gap-2">
+              <a href="tel:+902120000000" className="btn-gold px-6 py-3 rounded-sm text-sm inline-flex items-center gap-2">
                 <Phone className="h-4 w-4" /> Ara
               </a>
-              <a href="https://wa.me/902120000000" target="_blank" rel="noreferrer" className="px-6 py-3 rounded-full text-sm border border-gold/40 hover:border-gold hover:text-gold">
+              <a href="https://wa.me/902120000000" target="_blank" rel="noreferrer" className="px-6 py-3 rounded-sm text-sm border border-gold/40 hover:border-gold hover:text-gold">
                 WhatsApp
               </a>
             </div>
           </div>
-          <div className="glass-panel rounded-2xl overflow-hidden aspect-[4/3]">
+          <div className="glass-panel rounded-sm overflow-hidden aspect-[4/3]">
             <iframe
               title="Map"
               className="w-full h-full grayscale contrast-125 opacity-90"
@@ -240,10 +261,10 @@ function SectionHeader({ eyebrow, title, sub }: { eyebrow: string; title: string
     <div className="text-center max-w-2xl mx-auto">
       <div className="flex items-center justify-center gap-3 mb-4">
         <div className="h-px w-8 bg-gold" />
-        <span className="text-xs uppercase tracking-[0.3em] text-gold">{eyebrow}</span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-gold">{eyebrow}</span>
         <div className="h-px w-8 bg-gold" />
       </div>
-      <h2 className="font-display text-4xl md:text-5xl">{title}</h2>
+      <h2 className="font-display text-4xl md:text-5xl italic">{title}</h2>
       {sub && <p className="text-muted-foreground mt-4">{sub}</p>}
     </div>
   );

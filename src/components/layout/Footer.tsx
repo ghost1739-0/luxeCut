@@ -11,7 +11,8 @@ export function Footer() {
           <Link to="/" className="flex items-center gap-2">
             <Scissors className="h-5 w-5 text-gold" />
             <span className="font-display text-lg">
-              <span className="text-gradient-gold">MAISON</span> BARBER
+              <span className="text-gradient-gold italic">Maison</span>{" "}
+              <span className="font-mono text-xs tracking-[0.2em] uppercase align-middle">Barber</span>
             </span>
           </Link>
           <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
@@ -19,7 +20,7 @@ export function Footer() {
           </p>
         </div>
         <div>
-          <h4 className="text-xs uppercase tracking-widest text-gold mb-4">Menu</h4>
+          <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-gold mb-4">Menu</h4>
           <ul className="space-y-2 text-sm text-foreground/70">
             <li><Link to="/services" className="hover:text-gold">{t("nav.services")}</Link></li>
             <li><Link to="/barbers" className="hover:text-gold">{t("nav.barbers")}</Link></li>
@@ -28,7 +29,7 @@ export function Footer() {
           </ul>
         </div>
         <div>
-          <h4 className="text-xs uppercase tracking-widest text-gold mb-4">İletişim</h4>
+          <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-gold mb-4">İletişim</h4>
           <ul className="space-y-2 text-sm text-foreground/70">
             <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> +90 212 000 00 00</li>
             <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> info@maisonbarber.com</li>
@@ -36,7 +37,7 @@ export function Footer() {
           </ul>
         </div>
         <div>
-          <h4 className="text-xs uppercase tracking-widest text-gold mb-4">Sosyal</h4>
+          <h4 className="font-mono text-[11px] uppercase tracking-[0.25em] text-gold mb-4">Sosyal</h4>
           <a href="https://instagram.com" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-gold">
             <Instagram className="h-4 w-4" /> @maisonbarber
           </a>

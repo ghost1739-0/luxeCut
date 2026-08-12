@@ -44,8 +44,8 @@ export function Header() {
         <Link to="/" className="flex items-center gap-2 group">
           <Scissors className="h-6 w-6 text-gold transition-transform group-hover:rotate-12" />
           <span className="font-display text-xl tracking-wide">
-            <span className="text-gradient-gold">MAISON</span>
-            <span className="text-foreground/90 ml-1">BARBER</span>
+            <span className="text-gradient-gold italic">Maison</span>
+            <span className="text-foreground/90 ml-1.5 font-mono text-[13px] tracking-[0.2em] uppercase align-middle">Barber</span>
           </span>
         </Link>
 
@@ -75,7 +75,7 @@ export function Header() {
           {isAdmin && (
             <Link
               to="/admin"
-              className="flex items-center gap-1 text-xs uppercase tracking-widest text-gold hover:text-gold/80 border border-gold/40 px-3 py-1.5 rounded-full"
+              className="flex items-center gap-1 text-xs uppercase tracking-widest text-gold hover:text-gold/80 border border-gold/40 px-3 py-1.5 rounded-sm"
             >
               <Shield className="h-3.5 w-3.5" /> Admin
             </Link>
@@ -97,7 +97,7 @@ export function Header() {
           )}
           <Link
             to="/book"
-            className="btn-gold hover:[&]:btn-gold-hover px-5 py-2.5 rounded-full text-xs uppercase tracking-widest"
+            className="btn-gold hover:[&]:btn-gold-hover px-5 py-2.5 rounded-sm text-xs uppercase tracking-widest"
           >
             {t("nav.book")}
           </Link>
@@ -114,7 +114,7 @@ export function Header() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden glass-panel mx-4 mb-4 rounded-2xl p-6 flex flex-col gap-4"
+            className="md:hidden glass-panel mx-4 mb-4 rounded-sm p-6 flex flex-col gap-4"
           >
             {nav.map((n) => (
               <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className="text-foreground/80 hover:text-gold">
@@ -126,7 +126,7 @@ export function Header() {
                 <Shield className="h-4 w-4" /> Admin Panel
               </Link>
             )}
-            <Link to="/book" onClick={() => setOpen(false)} className="btn-gold text-center px-4 py-3 rounded-full">
+            <Link to="/book" onClick={() => setOpen(false)} className="btn-gold text-center px-4 py-3 rounded-sm">
               {t("nav.book")}
             </Link>
             <div className="flex items-center justify-between pt-2 border-t border-border/60">
