@@ -19,6 +19,21 @@ export const getBusySlots = createServerFn({ method: "GET" })
     return (rows ?? []) as { start_time: string; end_time: string }[];
   });
 
+// Public: fetch busy slots for ALL barbers on a given date.
+// Used when the customer selects "no preference" so the UI can grey out
+// a slot only when every active barber is booked at that time.
+export const getBusySlotsForDate = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .rpc("get_busy_slots_for_date" as never, { _date: data.date } as never);
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as { barber_id: string; start_time: string; end_time: string }[];
+  });
+
 const bookingSchema = z.object({
   barber_id: z.string().uuid().nullable(),
   service_ids: z.array(z.string().uuid()).min(1).max(10),
@@ -88,47 +103,48 @@ export const createBooking = createServerFn({ method: "POST" })
       }
     }
 
-    // 4. Check barber isn't already booked for this window.
     // 4. Determine barber: if a specific barber was requested, check only that one.
-// If no preference, auto-assign the first barber who is actually free.
-const { data: activeBarbers, error: barbersErr } = await supabaseAdmin
-  .from("barbers")
-  .select("id")
-  .eq("is_active", true)
-  .order("sort_order");
-if (barbersErr) throw new Error(barbersErr.message);
+    // If no preference, auto-assign the first barber who is actually free.
+    const { data: activeBarbers, error: barbersErr } = await supabaseAdmin
+      .from("barbers")
+      .select("id, full_name")
+      .eq("is_active", true)
+      .order("sort_order");
+    if (barbersErr) throw new Error(barbersErr.message);
 
-let assignedBarberId = data.barber_id;
+    let assignedBarberId = data.barber_id;
 
-if (assignedBarberId) {
-  const { data: busy } = await supabaseAdmin
-    .from("appointments")
-    .select("start_time, end_time")
-    .eq("barber_id", assignedBarberId)
-    .eq("appointment_date", data.appointment_date)
-    .in("status", ["pending", "approved", "completed"]);
-  const overlap = (busy ?? []).some((b: { start_time: string; end_time: string }) =>
-    data.start_time < b.end_time.slice(0, 5) && end_time > b.start_time.slice(0, 5),
-  );
-  if (overlap) throw new Error("Slot no longer available");
-} else {
-  const { data: allBusy } = await supabaseAdmin
-    .from("appointments")
-    .select("barber_id, start_time, end_time")
-    .eq("appointment_date", data.appointment_date)
-    .in("status", ["pending", "approved", "completed"])
-    .not("barber_id", "is", null);
+    if (assignedBarberId) {
+      const { data: busy } = await supabaseAdmin
+        .from("appointments")
+        .select("start_time, end_time")
+        .eq("barber_id", assignedBarberId)
+        .eq("appointment_date", data.appointment_date)
+        .in("status", ["pending", "approved", "completed"]);
+      const overlap = (busy ?? []).some((b: { start_time: string; end_time: string }) =>
+        data.start_time < b.end_time.slice(0, 5) && end_time > b.start_time.slice(0, 5),
+      );
+      if (overlap) throw new Error("Slot no longer available");
+    } else {
+      const { data: allBusy } = await supabaseAdmin
+        .from("appointments")
+        .select("barber_id, start_time, end_time")
+        .eq("appointment_date", data.appointment_date)
+        .in("status", ["pending", "approved", "completed"])
+        .not("barber_id", "is", null);
 
-  const busyBarberIds = new Set(
-    (allBusy ?? [])
-      .filter((b: any) => data.start_time < b.end_time.slice(0, 5) && end_time > b.start_time.slice(0, 5))
-      .map((b: any) => b.barber_id),
-  );
+      const busyBarberIds = new Set(
+        (allBusy ?? [])
+          .filter((b: any) => data.start_time < b.end_time.slice(0, 5) && end_time > b.start_time.slice(0, 5))
+          .map((b: any) => b.barber_id),
+      );
 
-  const available = (activeBarbers ?? []).find((b) => !busyBarberIds.has(b.id));
-  if (!available) throw new Error("Slot no longer available");
-  assignedBarberId = available.id;
-}
+      const available = (activeBarbers ?? []).find((b) => !busyBarberIds.has(b.id));
+      if (!available) throw new Error("Slot no longer available");
+      assignedBarberId = available.id;
+    }
+
+    const assigned_barber_name = (activeBarbers ?? []).find((b) => b.id === assignedBarberId)?.full_name ?? null;
 
     // 5. Insert.
     const { data: inserted, error: insErr } = await supabaseAdmin
@@ -157,11 +173,6 @@ if (assignedBarberId) {
     // Fire-and-forget WhatsApp notification to shop owner.
     try {
       const { sendWhatsApp, bookingCreatedMessage } = await import("./notifications.server");
-      let barber_name: string | null = null;
-      if (data.barber_id) {
-        const { data: b } = await supabaseAdmin.from("barbers").select("full_name").eq("id", data.barber_id).maybeSingle();
-        barber_name = b?.full_name ?? null;
-      }
       const owner = process.env.SHOP_OWNER_WHATSAPP;
       if (owner) {
         await sendWhatsApp(owner, bookingCreatedMessage({
@@ -170,14 +181,14 @@ if (assignedBarberId) {
           appointment_date: data.appointment_date,
           start_time: data.start_time,
           total_price: total_price - discount,
-          barber_name,
+          barber_name: assigned_barber_name,
         }));
       }
     } catch (e) {
       console.warn("[booking] notification failed", e);
     }
 
-    return inserted as { id: string; qr_code: string };
+    return { ...inserted, barber_name: assigned_barber_name } as { id: string; qr_code: string; barber_name: string | null };
   });
 
 // Admin-only: change appointment status and notify shop owner via WhatsApp.

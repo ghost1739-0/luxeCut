@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useI18n } from "@/lib/i18n";
 import {
-  fetchServices, fetchBarbers, fetchBusySlots, fetchWorkingHours, fetchHolidays,
+  fetchServices, fetchBarbers, fetchBusySlots, fetchBusySlotsForDate, fetchWorkingHours, fetchHolidays,
   fetchBlockedSlots,
   generateTimeSlots, addMinutesToTime, timeOverlaps, createAppointment,
   type ServiceRow, type BarberRow, type WorkingHourRow,
@@ -38,7 +38,7 @@ export function BookingWizard() {
   const [date, setDate] = useState<string>(() => new Date(Date.now() + 86400000).toISOString().slice(0, 10));
   const [time, setTime] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<{ id: string; qr_code: string } | null>(null);
+  const [success, setSuccess] = useState<{ id: string; qr_code: string; barber_name: string | null } | null>(null);
 
   const { data: services = [] } = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const { data: barbers = [] } = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
@@ -70,6 +70,13 @@ export function BookingWizard() {
     enabled: !!barberId && !!date,
   });
 
+  // Fetch busy slots for ALL barbers when no preference was selected
+  const { data: allBusy = [] } = useQuery({
+    queryKey: ["busy-all", date],
+    queryFn: () => fetchBusySlotsForDate(date),
+    enabled: !barberId && !!date,
+  });
+
  const availableSlots = useMemo(() => {
   if (!totalDuration || dayInfo.closed || !dayInfo.wh) return [];
   const dow = new Date(date + "T00:00:00").getDay();
@@ -86,11 +93,24 @@ export function BookingWizard() {
       const [eh, em] = end.split(":").map(Number);
       return sh * 60 + sm >= openMin && eh * 60 + em <= closeMin;
     })
-    .map(({ start, end }) => ({
-      start, end,
-      taken: dayBlocked.has(start) || busy.some((b) => timeOverlaps(start, end, b.start_time.slice(0, 5), b.end_time.slice(0, 5))),
-    }));
-}, [busy, totalDuration, dayInfo, blockedSlots, date]);
+    .map(({ start, end }) => {
+      let taken: boolean;
+      if (dayBlocked.has(start)) {
+        taken = true;
+      } else if (barberId) {
+        taken = busy.some((b) => timeOverlaps(start, end, b.start_time.slice(0, 5), b.end_time.slice(0, 5)));
+      } else {
+        // "Fark etmez": slot only taken if EVERY active barber is busy at this time
+        const busyBarberIds = new Set(
+          allBusy
+            .filter((b) => timeOverlaps(start, end, b.start_time.slice(0, 5), b.end_time.slice(0, 5)))
+            .map((b) => b.barber_id),
+        );
+        taken = barbers.length > 0 && barbers.every((b) => busyBarberIds.has(b.id));
+      }
+      return { start, end, taken };
+    });
+}, [busy, allBusy, barbers, barberId, totalDuration, dayInfo, blockedSlots, date]);
 
   const form = useForm<Info>({ resolver: zodResolver(infoSchema), defaultValues: { customer_email: "" } });
 
@@ -135,7 +155,7 @@ export function BookingWizard() {
     }
   };
 
-  if (success) return <SuccessCard qr={success.qr_code} />;
+  if (success) return <SuccessCard qr={success.qr_code} barberName={success.barber_name} />;
 
   return (
     <div className="glass-panel rounded-3xl p-6 md:p-10">
@@ -332,7 +352,7 @@ function StepTime({ slots, value, onSelect, noBarber }: {
     <div>
       <h3 className="font-display text-2xl mb-1">Saat Seçin</h3>
       <p className="text-sm text-muted-foreground mb-6">
-        {noBarber ? "İlk uygun usta seçildi — tüm saatler açık." : "Dolu saatler pasif olarak görüntülenir."}
+        {noBarber ? "İlk uygun usta seçildi — sadece tüm ustalar dolu olan saatler pasiftir." : "Dolu saatler pasif olarak görüntülenir."}
       </p>
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
         {slots.map((s) => (
@@ -423,13 +443,16 @@ function Row({ icon, label, value }: any) {
   );
 }
 
-function SuccessCard({ qr }: { qr: string }) {
+function SuccessCard({ qr, barberName }: { qr: string; barberName: string | null }) {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel rounded-3xl p-10 text-center">
       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }} className="mx-auto h-20 w-20 rounded-full bg-gold flex items-center justify-center mb-6">
         <Check className="h-10 w-10 text-primary-foreground" />
       </motion.div>
       <h2 className="font-display text-4xl">Randevunuz Alındı!</h2>
+      {barberName && (
+        <p className="text-gold mt-2 text-sm uppercase tracking-widest">Ustanız: {barberName}</p>
+      )}
       <p className="text-muted-foreground mt-3">Kısa süre içinde SMS ve e-posta ile onay göndereceğiz.</p>
       <div className="mt-8 inline-block p-4 rounded-xl bg-onyx border border-gold/40">
         <p className="text-xs uppercase tracking-widest text-gold mb-1">Doğrulama Kodu</p>

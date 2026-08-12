@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getBusySlots, createBooking } from "@/lib/booking.functions";
+import { getBusySlots, getBusySlotsForDate, createBooking } from "@/lib/booking.functions";
 
 export type ServiceRow = {
   id: string;
@@ -69,6 +69,10 @@ export async function fetchHolidays(): Promise<string[]> {
 
 export async function fetchBusySlots(barberId: string, date: string) {
   return await getBusySlots({ data: { barberId, date } });
+}
+
+export async function fetchBusySlotsForDate(date: string) {
+  return await getBusySlotsForDate({ data: { date } });
 }
 
 export function generateTimeSlots(startHour = 9, endHour = 20, stepMin = 30) {
