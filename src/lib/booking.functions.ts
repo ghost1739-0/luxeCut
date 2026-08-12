@@ -89,24 +89,52 @@ export const createBooking = createServerFn({ method: "POST" })
     }
 
     // 4. Check barber isn't already booked for this window.
-    if (data.barber_id) {
-      const { data: busy } = await supabaseAdmin
-        .from("appointments")
-        .select("start_time, end_time")
-        .eq("barber_id", data.barber_id)
-        .eq("appointment_date", data.appointment_date)
-        .in("status", ["pending", "approved", "completed"]);
-      const overlap = (busy ?? []).some((b: { start_time: string; end_time: string }) =>
-        data.start_time < b.end_time.slice(0, 5) && end_time > b.start_time.slice(0, 5),
-      );
-      if (overlap) throw new Error("Slot no longer available");
-    }
+    // 4. Determine barber: if a specific barber was requested, check only that one.
+// If no preference, auto-assign the first barber who is actually free.
+const { data: activeBarbers, error: barbersErr } = await supabaseAdmin
+  .from("barbers")
+  .select("id")
+  .eq("is_active", true)
+  .order("sort_order");
+if (barbersErr) throw new Error(barbersErr.message);
+
+let assignedBarberId = data.barber_id;
+
+if (assignedBarberId) {
+  const { data: busy } = await supabaseAdmin
+    .from("appointments")
+    .select("start_time, end_time")
+    .eq("barber_id", assignedBarberId)
+    .eq("appointment_date", data.appointment_date)
+    .in("status", ["pending", "approved", "completed"]);
+  const overlap = (busy ?? []).some((b: { start_time: string; end_time: string }) =>
+    data.start_time < b.end_time.slice(0, 5) && end_time > b.start_time.slice(0, 5),
+  );
+  if (overlap) throw new Error("Slot no longer available");
+} else {
+  const { data: allBusy } = await supabaseAdmin
+    .from("appointments")
+    .select("barber_id, start_time, end_time")
+    .eq("appointment_date", data.appointment_date)
+    .in("status", ["pending", "approved", "completed"])
+    .not("barber_id", "is", null);
+
+  const busyBarberIds = new Set(
+    (allBusy ?? [])
+      .filter((b: any) => data.start_time < b.end_time.slice(0, 5) && end_time > b.start_time.slice(0, 5))
+      .map((b: any) => b.barber_id),
+  );
+
+  const available = (activeBarbers ?? []).find((b) => !busyBarberIds.has(b.id));
+  if (!available) throw new Error("Slot no longer available");
+  assignedBarberId = available.id;
+}
 
     // 5. Insert.
     const { data: inserted, error: insErr } = await supabaseAdmin
       .from("appointments")
       .insert({
-        barber_id: data.barber_id,
+        barber_id: assignedBarberId,
         service_ids: data.service_ids,
         customer_id: null,
         customer_name: data.customer_name,
