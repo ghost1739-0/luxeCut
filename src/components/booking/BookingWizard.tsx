@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -459,7 +460,7 @@ function SuccessCard({ qr, barberName }: { qr: string; barberName: string | null
         <p className="font-mono text-sm">{qr.slice(0, 8).toUpperCase()}</p>
       </div>
       <div className="mt-8">
-        <a href="/" className="btn-gold px-6 py-3 rounded-full text-sm uppercase tracking-widest inline-block">Ana Sayfa</a>
+        <Link to="/" className="btn-gold px-6 py-3 rounded-full text-sm uppercase tracking-widest inline-block">Ana Sayfa</Link>
       </div>
     </motion.div>
   );
