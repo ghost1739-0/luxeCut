@@ -31,7 +31,7 @@ function Home() {
     queryFn: async () => {
       const { data } = await supabase
         .from("reviews")
-        .select("*")
+        .select("*, barbers(full_name), services(name_tr)")
         .eq("is_approved", true)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -214,6 +214,10 @@ function Home() {
                 </div>
                 <p className="text-foreground/85 leading-relaxed italic">"{r.comment}"</p>
                 <p className="text-sm text-gold mt-4">— {r.customer_name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Usta: {r.barbers?.full_name ?? "—"}
+                  {r.services?.name_tr && ` · Hizmet: ${r.services.name_tr}`}
+                </p>
               </motion.div>
             ))}
           </div>

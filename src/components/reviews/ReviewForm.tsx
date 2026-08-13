@@ -20,6 +20,7 @@ export function ReviewForm() {
 
   const submit = async () => {
     if (!comment.trim() || !name.trim()) return toast.error("Lütfen ad ve yorum girin.");
+    if (!barberId) return toast.error("Lütfen bir usta seçin.");
     setSubmitting(true);
     const { error } = await supabase.from("reviews").insert({
       customer_name: name.trim(),
@@ -50,8 +51,8 @@ export function ReviewForm() {
 
       <div className="grid sm:grid-cols-2 gap-3">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız *" className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm" />
-        <select value={barberId} onChange={(e) => setBarberId(e.target.value)} className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm">
-          <option value="">Usta seçin (opsiyonel)</option>
+        <select value={barberId} onChange={(e) => setBarberId(e.target.value)} required className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm">
+          <option value="">Usta seçin *</option>
           {barbers.map((b) => <option key={b.id} value={b.id}>{b.full_name}</option>)}
         </select>
         <select value={serviceId} onChange={(e) => setServiceId(e.target.value)} className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm sm:col-span-2">
