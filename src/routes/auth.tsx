@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Giriş / Kayıt — Maison Barber" },
-      { name: "description", content: "Hesabınıza giriş yapın veya yeni hesap oluşturun." },
+      { title: "Giriş — Maison Barber" },
+      { name: "description", content: "Yönetim paneli girişi." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -17,33 +17,18 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Hoş geldiniz");
-        nav({ to: "/" });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: name },
-          },
-        });
-        if (error) throw error;
-        toast.success("Hesabınız oluşturuldu");
-        nav({ to: "/" });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("Hoş geldiniz");
+      nav({ to: "/admin" });
     } catch (err: any) {
       toast.error(err.message ?? "Bir hata oluştu");
     } finally {
@@ -58,25 +43,16 @@ function AuthPage() {
           <Scissors className="h-5 w-5 text-gold" />
           <span className="font-display text-lg"><span className="text-gradient-gold">MAISON</span> BARBER</span>
         </a>
-        <h1 className="font-display text-3xl text-center">{mode === "signin" ? "Giriş" : "Hesap Oluştur"}</h1>
-        <p className="text-sm text-muted-foreground text-center mt-1">
-          {mode === "signin" ? "Randevularınızı yönetin" : "Sadakat puanları kazanın"}
-        </p>
+        <h1 className="font-display text-3xl text-center">Giriş</h1>
+        <p className="text-sm text-muted-foreground text-center mt-1">Yönetim paneline giriş yapın</p>
 
         <form onSubmit={submit} className="space-y-3 mt-6">
-          {mode === "signup" && (
-            <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ad Soyad" className="input-a" />
-          )}
           <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta" className="input-a" />
           <input required type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Şifre" className="input-a" />
           <button disabled={loading} className="btn-gold w-full py-3 rounded-full text-sm uppercase tracking-widest disabled:opacity-50">
-            {loading ? "..." : mode === "signin" ? "Giriş Yap" : "Kayıt Ol"}
+            {loading ? "..." : "Giriş Yap"}
           </button>
         </form>
-
-        <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="mt-4 text-xs text-muted-foreground hover:text-gold w-full text-center">
-          {mode === "signin" ? "Hesabınız yok mu? Kayıt olun" : "Zaten hesabınız var mı? Giriş yapın"}
-        </button>
       </div>
       <style>{`
         .input-a { width: 100%; background: color-mix(in oklab, var(--input) 60%, transparent); border: 1px solid var(--border); border-radius: .75rem; padding: .75rem 1rem; color: var(--foreground); }
