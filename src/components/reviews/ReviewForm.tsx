@@ -1,19 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Star, Send } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchBarbers, fetchServices } from "@/lib/booking";
 
 export function ReviewForm() {
   const qc = useQueryClient();
-  const [user, setUser] = useState<any>(null);
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user ?? null));
-    return () => sub.subscription.unsubscribe();
-  }, []);
 
   const { data: barbers = [] } = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
   const { data: services = [] } = useQuery({ queryKey: ["services"], queryFn: fetchServices });
@@ -41,15 +34,6 @@ export function ReviewForm() {
     setComment(""); setRating(5); setBarberId(""); setServiceId("");
     qc.invalidateQueries({ queryKey: ["reviews"] });
   };
-
-  if (!user) {
-    return (
-      <div className="glass-panel rounded-2xl p-8 text-center max-w-2xl mx-auto mt-10">
-        <p className="text-muted-foreground mb-4">Yorum yapmak için giriş yapın.</p>
-        <Link to="/auth" className="btn-gold px-6 py-3 rounded-full text-xs uppercase tracking-widest">Giriş Yap</Link>
-      </div>
-    );
-  }
 
   return (
     <div className="glass-panel rounded-2xl p-6 md:p-8 max-w-2xl mx-auto mt-10">

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Scissors, Menu, X, Globe, LogIn, LogOut, Shield } from "lucide-react";
+import { Scissors, Menu, X, Globe, LogOut, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
@@ -87,14 +87,7 @@ export function Header() {
             >
               <LogOut className="h-4 w-4" /> {t("nav.signout")}
             </button>
-          ) : (
-            <Link
-              to="/auth"
-              className="flex items-center gap-1 text-xs uppercase tracking-widest text-foreground/60 hover:text-gold"
-            >
-              <LogIn className="h-4 w-4" /> {t("nav.signin")}
-            </Link>
-          )}
+          ) : null}
           <Link
             to="/book"
             className="btn-gold hover:[&]:btn-gold-hover px-5 py-2.5 rounded-sm text-xs uppercase tracking-widest"
@@ -140,11 +133,7 @@ export function Header() {
                 <button onClick={() => supabase.auth.signOut()} className="text-xs uppercase text-foreground/70">
                   {t("nav.signout")}
                 </button>
-              ) : (
-                <Link to="/auth" onClick={() => setOpen(false)} className="text-xs uppercase text-foreground/70">
-                  {t("nav.signin")}
-                </Link>
-              )}
+              ) : null}
             </div>
           </motion.div>
         )}
