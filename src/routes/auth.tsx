@@ -3,7 +3,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Scissors } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-// Google OAuth: configure via Cloud → Auth to enable
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -52,18 +51,6 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin },
-      });
-      if (error) throw error;
-    } catch (e: any) {
-      toast.error(e.message ?? "Google girişi henüz yapılandırılmamış");
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="glass-panel rounded-3xl p-8 md:p-10 w-full max-w-md">
@@ -76,14 +63,7 @@ function AuthPage() {
           {mode === "signin" ? "Randevularınızı yönetin" : "Sadakat puanları kazanın"}
         </p>
 
-        <button onClick={google} className="mt-6 w-full py-3 rounded-full border border-border hover:border-gold hover:text-gold text-sm">
-          Google ile devam et
-        </button>
-        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> veya <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <form onSubmit={submit} className="space-y-3">
+        <form onSubmit={submit} className="space-y-3 mt-6">
           {mode === "signup" && (
             <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ad Soyad" className="input-a" />
           )}
