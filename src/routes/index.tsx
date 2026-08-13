@@ -29,7 +29,12 @@ function Home() {
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews"],
     queryFn: async () => {
-      const { data } = await supabase.from("reviews").select("*").eq("is_approved", true).limit(6);
+      const { data } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("is_approved", true)
+        .order("created_at", { ascending: false })
+        .limit(20);
       return data ?? [];
     },
   });
