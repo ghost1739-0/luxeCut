@@ -238,10 +238,10 @@ function Home() {
               ))}
             </ul>
             <div className="mt-8 flex flex-wrap gap-4">
-              <a href="tel:+902120000000" className="btn-gold px-6 py-3 rounded-sm text-sm inline-flex items-center gap-2">
+              <a href="tel:+905388749219" className="btn-gold px-6 py-3 rounded-sm text-sm inline-flex items-center gap-2">
                 <Phone className="h-4 w-4" /> Ara
               </a>
-              <a href="https://wa.me/902120000000" target="_blank" rel="noreferrer" className="px-6 py-3 rounded-sm text-sm border border-gold/40 hover:border-gold hover:text-gold">
+              <a href="https://wa.me/905388749219" target="_blank" rel="noreferrer" className="px-6 py-3 rounded-sm text-sm border border-gold/40 hover:border-gold hover:text-gold">
                 WhatsApp
               </a>
             </div>

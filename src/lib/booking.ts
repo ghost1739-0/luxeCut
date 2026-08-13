@@ -55,10 +55,46 @@ export type WorkingHourRow = {
   is_closed: boolean;
 };
 
+export type WorkingHourOverrideRow = {
+  id: string;
+  week_start: string;
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  is_closed: boolean;
+};
+
+const formatDateLocal = (value: Date) => {
+  const y = value.getFullYear();
+  const m = String(value.getMonth() + 1).padStart(2, "0");
+  const d = String(value.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+export function getWeekStartIso(value: Date | string = new Date()) {
+  const date = typeof value === "string" ? new Date(value + "T00:00:00") : new Date(value);
+  const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const mondayOffset = (localDate.getDay() + 6) % 7;
+  localDate.setDate(localDate.getDate() - mondayOffset);
+  return formatDateLocal(localDate);
+}
+
 export async function fetchWorkingHours(): Promise<WorkingHourRow[]> {
   const { data, error } = await supabase.from("working_hours").select("*").order("day_of_week");
   if (error) throw error;
   return (data ?? []) as WorkingHourRow[];
+}
+
+export async function fetchWorkingHourOverrides(weekStarts: string[]): Promise<WorkingHourOverrideRow[]> {
+  if (!weekStarts.length) return [];
+  const { data, error } = await supabase
+    .from("working_hours_overrides")
+    .select("*")
+    .in("week_start", weekStarts)
+    .order("week_start")
+    .order("day_of_week");
+  if (error) throw error;
+  return (data ?? []) as WorkingHourOverrideRow[];
 }
 
 export async function fetchHolidays(): Promise<string[]> {
@@ -113,23 +149,49 @@ export async function createAppointment(payload: BookingPayload) {
   return await createBooking({ data: payload });
 }
 
-export type BlockedSlotRow = { id: string; day_of_week: number; time_slot: string };
-
-export async function fetchBlockedSlots(): Promise<BlockedSlotRow[]> {
-  const { data, error } = await (supabase.from("blocked_time_slots" as any) as any).select("*");
-  if (error) throw error;
-  return (data ?? []) as BlockedSlotRow[];
+export function normalizeTimeSlot(value: string | null | undefined) {
+  return String(value ?? "").slice(0, 5);
 }
 
-export async function addBlockedSlot(day_of_week: number, time_slot: string) {
-  const { error } = await (supabase.from("blocked_time_slots" as any) as any).insert({ day_of_week, time_slot });
+export type BlockedSlotRow = {
+  id: string;
+  day_of_week: number | string;
+  time_slot: string;
+  week_start: string;
+  created_at?: string;
+};
+
+export async function fetchBlockedSlots(weekStarts?: string[]): Promise<BlockedSlotRow[]> {
+  let query = (supabase.from("blocked_time_slots" as any) as any).select("*");
+  if (weekStarts && weekStarts.length > 0) {
+    query = query.in("week_start", weekStarts);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return ((data ?? []) as BlockedSlotRow[]).map((row) => ({
+    ...row,
+    day_of_week: String(row.day_of_week),
+    time_slot: normalizeTimeSlot(row.time_slot),
+    week_start: String(row.week_start),
+  }));
+}
+
+export async function addBlockedSlot(week_start: string, day_of_week: number, time_slot: string) {
+  const normalized = normalizeTimeSlot(time_slot);
+  const { error } = await (supabase.from("blocked_time_slots" as any) as any).insert({
+    week_start,
+    day_of_week: String(day_of_week),
+    time_slot: normalized,
+  });
   if (error) throw error;
 }
 
-export async function removeBlockedSlot(day_of_week: number, time_slot: string) {
+export async function removeBlockedSlot(week_start: string, day_of_week: number, time_slot: string) {
+  const normalized = normalizeTimeSlot(time_slot);
   const { error } = await (supabase.from("blocked_time_slots" as any) as any)
     .delete()
-    .eq("day_of_week", day_of_week)
-    .eq("time_slot", time_slot);
+    .eq("week_start", week_start)
+    .eq("day_of_week", String(day_of_week))
+    .eq("time_slot", normalized);
   if (error) throw error;
 }

@@ -34,6 +34,14 @@ export const getBusySlotsForDate = createServerFn({ method: "GET" })
     return (rows ?? []) as { barber_id: string; start_time: string; end_time: string }[];
   });
 
+const normalizeTimeSlot = (value: string | null | undefined) => String(value ?? "").slice(0, 5);
+const getWeekStartIsoUtc = (isoDate: string) => {
+  const d = new Date(isoDate + "T00:00:00Z");
+  const mondayOffset = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - mondayOffset);
+  return d.toISOString().slice(0, 10);
+};
+
 const bookingSchema = z.object({
   barber_id: z.string().uuid().nullable(),
   service_ids: z.array(z.string().uuid()).min(1).max(10),
@@ -66,7 +74,15 @@ export const createBooking = createServerFn({ method: "POST" })
 
     // 2. Validate against working hours + holidays from DB.
     const dow = new Date(data.appointment_date + "T00:00:00Z").getUTCDay();
-    const { data: wh } = await supabaseAdmin.from("working_hours").select("*").eq("day_of_week", dow).maybeSingle();
+    const weekStart = getWeekStartIsoUtc(data.appointment_date);
+    const { data: whOverride } = await supabaseAdmin
+      .from("working_hours_overrides")
+      .select("*")
+      .eq("week_start", weekStart)
+      .eq("day_of_week", dow)
+      .maybeSingle();
+    const { data: whBase } = await supabaseAdmin.from("working_hours").select("*").eq("day_of_week", dow).maybeSingle();
+    const wh = whOverride ?? whBase;
     if (!wh || wh.is_closed) throw new Error("Closed on this day");
     const { data: hol } = await supabaseAdmin.from("holidays").select("holiday_date").eq("holiday_date", data.appointment_date).maybeSingle();
     if (hol) throw new Error("Holiday");
@@ -81,12 +97,13 @@ export const createBooking = createServerFn({ method: "POST" })
     const end_time = `${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
 
     // 2.5 Check blocked slot
-    const { data: blockedRow } = await (supabaseAdmin.from("blocked_time_slots" as any) as any)
-      .select("id")
-      .eq("day_of_week", dow)
-      .eq("time_slot", data.start_time)
-      .maybeSingle();
-    if (blockedRow) throw new Error("Slot blocked by admin");
+    const { data: blockedRows } = await (supabaseAdmin.from("blocked_time_slots" as any) as any)
+      .select("id, time_slot, day_of_week, week_start")
+      .eq("week_start", weekStart);
+    const blocked = (blockedRows ?? []).some(
+      (row: any) => String(row.day_of_week) === String(dow) && normalizeTimeSlot(row.time_slot) === data.start_time,
+    );
+    if (blocked) throw new Error("Slot blocked by admin");
 
     // 3. Validate coupon server-side if provided.
     let discount = 0;

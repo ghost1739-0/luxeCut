@@ -74,7 +74,7 @@ function ContactPage() {
               <InfoRow icon={<Mail className="h-5 w-5" />} label="E-posta" value="info@maisonbarber.com" />
               <div className="flex gap-3 pt-4 border-t border-border/40">
                 <a href="https://instagram.com" target="_blank" rel="noreferrer" className="p-3 rounded-full border border-gold/40 hover:border-gold hover:text-gold"><Instagram className="h-4 w-4" /></a>
-                <a href="https://wa.me/902120000000" target="_blank" rel="noreferrer" className="p-3 rounded-full border border-gold/40 hover:border-gold hover:text-gold"><MessageCircle className="h-4 w-4" /></a>
+                <a href="https://wa.me/905388749219" target="_blank" rel="noreferrer" className="p-3 rounded-full border border-gold/40 hover:border-gold hover:text-gold"><MessageCircle className="h-4 w-4" /></a>
               </div>
             </div>
             <div className="rounded-2xl overflow-hidden aspect-video border border-border/60">

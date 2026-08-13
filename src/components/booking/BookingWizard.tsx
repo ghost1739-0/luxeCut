@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight, Clock, Sparkles, User, Calendar as CalIcon, ScissorsSquare } from "lucide-react";
@@ -10,9 +10,11 @@ import { z } from "zod";
 import { useI18n } from "@/lib/i18n";
 import {
   fetchServices, fetchBarbers, fetchBusySlots, fetchBusySlotsForDate, fetchWorkingHours, fetchHolidays,
+  fetchWorkingHourOverrides,
   fetchBlockedSlots,
   generateTimeSlots, addMinutesToTime, timeOverlaps, createAppointment,
-  type ServiceRow, type BarberRow, type WorkingHourRow,
+  normalizeTimeSlot, getWeekStartIso,
+  type ServiceRow, type BarberRow, type WorkingHourRow, type WorkingHourOverrideRow,
 } from "@/lib/booking";
 import barber1 from "@/assets/barber-1.jpg";
 import barber2 from "@/assets/barber-2.jpg";
@@ -44,7 +46,28 @@ export function BookingWizard() {
   const { data: services = [] } = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const { data: barbers = [] } = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
   const { data: workingHours = [] } = useQuery({ queryKey: ["working_hours"], queryFn: fetchWorkingHours });
-  const { data: blockedSlots = [] } = useQuery({ queryKey: ["blocked_slots"], queryFn: fetchBlockedSlots });
+  const visibleWeekStarts = useMemo(() => {
+    const today = new Date();
+    const weekStarts = new Set<string>();
+    for (let i = 0; i < 21; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      weekStarts.add(getWeekStartIso(d));
+    }
+    weekStarts.add(getWeekStartIso(date));
+    return Array.from(weekStarts);
+  }, [date]);
+  const { data: workingHourOverrides = [] } = useQuery({
+    queryKey: ["working_hour_overrides", visibleWeekStarts.join("|")],
+    queryFn: () => fetchWorkingHourOverrides(visibleWeekStarts),
+    enabled: visibleWeekStarts.length > 0,
+  });
+  const selectedWeekStart = useMemo(() => getWeekStartIso(date), [date]);
+  const { data: blockedSlots = [] } = useQuery({
+    queryKey: ["blocked_slots", visibleWeekStarts.join("|")],
+    queryFn: () => fetchBlockedSlots(visibleWeekStarts),
+    enabled: visibleWeekStarts.length > 0,
+  });
   const { data: holidays = [] } = useQuery({ queryKey: ["holidays"], queryFn: fetchHolidays });
 
   const chosenServices = useMemo(
@@ -56,13 +79,24 @@ export function BookingWizard() {
 
   const chosenBarber = barbers.find((b) => b.id === barberId) ?? null;
 
+  const resolveWorkingHour = useMemo(() => {
+    return (isoDate: string): WorkingHourRow | WorkingHourOverrideRow | null => {
+      const dow = new Date(isoDate + "T00:00:00").getDay();
+      const weekStart = getWeekStartIso(isoDate);
+      const override = workingHourOverrides.find(
+        (row) => Number(row.day_of_week) === dow && String(row.week_start) === weekStart,
+      );
+      if (override) return override;
+      return workingHours.find((w) => w.day_of_week === dow) ?? null;
+    };
+  }, [workingHours, workingHourOverrides]);
+
   const dayInfo = useMemo(() => {
-    const dow = new Date(date + "T00:00:00").getDay();
-    const wh = workingHours.find((w) => w.day_of_week === dow);
+    const wh = resolveWorkingHour(date);
     const isHoliday = holidays.includes(date);
     const closed = !wh || wh.is_closed || isHoliday;
     return { closed, isHoliday, wh: wh ?? null };
-  }, [date, workingHours, holidays]);
+  }, [date, resolveWorkingHour, holidays]);
 
   // Fetch busy slots for chosen barber+date
   const { data: busy = [] } = useQuery({
@@ -81,7 +115,11 @@ export function BookingWizard() {
  const availableSlots = useMemo(() => {
   if (!totalDuration || dayInfo.closed || !dayInfo.wh) return [];
   const dow = new Date(date + "T00:00:00").getDay();
-  const dayBlocked = new Set(blockedSlots.filter((b) => b.day_of_week === dow).map((b) => b.time_slot.slice(0, 5)));
+  const dayBlocked = new Set(
+    blockedSlots
+      .filter((b) => b.week_start === selectedWeekStart && String(b.day_of_week) === String(dow))
+      .map((b) => normalizeTimeSlot(b.time_slot)),
+  );
   const [openH, openM] = dayInfo.wh.open_time.split(":").map(Number);
   const [closeH, closeM] = dayInfo.wh.close_time.split(":").map(Number);
   const openMin = openH * 60 + openM;
@@ -111,7 +149,15 @@ export function BookingWizard() {
       }
       return { start, end, taken };
     });
-}, [busy, allBusy, barbers, barberId, totalDuration, dayInfo, blockedSlots, date]);
+}, [busy, allBusy, barbers, barberId, totalDuration, dayInfo, blockedSlots, date, selectedWeekStart]);
+
+  useEffect(() => {
+    if (!time) return;
+    const slotStillOpen = availableSlots.some((slot) => slot.start === time && !slot.taken);
+    if (!slotStillOpen) {
+      setTime(null);
+    }
+  }, [time, availableSlots]);
 
   const form = useForm<Info>({ resolver: zodResolver(infoSchema), defaultValues: { customer_email: "" } });
 
@@ -173,7 +219,7 @@ export function BookingWizard() {
         >
           {step === 0 && <StepServices services={services} selected={selectedServices} onToggle={(id) => setSelectedServices((v) => v.includes(id) ? v.filter((x) => x !== id) : [...v, id])} lang={lang} />}
           {step === 1 && <StepBarber barbers={barbers} selected={barberId} onSelect={setBarberId} lang={lang} />}
-          {step === 2 && <StepDate date={date} onChange={setDate} workingHours={workingHours} holidays={holidays} />}
+          {step === 2 && <StepDate date={date} onChange={setDate} resolveWorkingHour={resolveWorkingHour} holidays={holidays} />}
           {step === 3 && <StepTime slots={availableSlots} value={time} onSelect={setTime} noBarber={!barberId} />}
           {step === 4 && <StepInfo form={form} />}
           {step === 5 && <StepConfirm services={chosenServices} barber={chosenBarber} date={date} time={time!} totalPrice={totalPrice} totalDuration={totalDuration} info={form.getValues()} lang={lang} />}
@@ -303,9 +349,10 @@ function StepBarber({ barbers, selected, onSelect, lang }: { barbers: BarberRow[
 
 function isPast(d: string) { const x = new Date(d); x.setHours(23,59,59); return x.getTime() < Date.now(); }
 
-function StepDate({ date, onChange, workingHours, holidays }: {
+function StepDate({ date, onChange, resolveWorkingHour, holidays }: {
   date: string; onChange: (d: string) => void;
-  workingHours: WorkingHourRow[]; holidays: string[];
+  resolveWorkingHour: (isoDate: string) => WorkingHourRow | WorkingHourOverrideRow | null;
+  holidays: string[];
 }) {
   const today = new Date();
   const days: Date[] = [];
@@ -315,7 +362,6 @@ function StepDate({ date, onChange, workingHours, holidays }: {
   }
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
   const labels = ["Paz","Pzt","Sal","Çar","Per","Cum","Cts"];
-  const closedDays = new Set(workingHours.filter((w) => w.is_closed).map((w) => w.day_of_week));
   return (
     <div>
       <h3 className="font-display text-2xl mb-1">Tarih Seçin</h3>
@@ -323,7 +369,8 @@ function StepDate({ date, onChange, workingHours, holidays }: {
       <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
         {days.map((d) => {
           const iso = fmt(d);
-          const disabled = closedDays.has(d.getDay()) || holidays.includes(iso);
+          const wh = resolveWorkingHour(iso);
+          const disabled = !wh || wh.is_closed || holidays.includes(iso);
           const active = iso === date;
           return (
             <button

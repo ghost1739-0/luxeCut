@@ -1,7 +1,7 @@
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Users, Scissors, TrendingUp, CheckCircle2, XCircle, Clock, Plus, Trash2, Save, CalendarX } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { updateAppointmentStatus } from "@/lib/booking.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { fetchBlockedSlots, addBlockedSlot, removeBlockedSlot } from "@/lib/booking";
+import { fetchBlockedSlots, addBlockedSlot, removeBlockedSlot, getWeekStartIso } from "@/lib/booking";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Yönetim Paneli — Maison Barber" }, { name: "robots", content: "noindex" }] }),
@@ -236,6 +236,14 @@ function ServicesTab() {
           <Plus className="h-3 w-3" /> Ekle
         </button>
       </div>
+      <div className="mb-2 grid grid-cols-12 gap-2 px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+        <span className="col-span-3">Ad (TR)</span>
+        <span className="col-span-3">Ad (EN)</span>
+        <span className="col-span-2">Fiyat (TL)</span>
+        <span className="col-span-2">Süre (dk)</span>
+        <span className="col-span-1">Durum</span>
+        <span className="col-span-1 text-right">İşlem</span>
+      </div>
       <div className="space-y-3">
         {services.map((s: any) => (
           <ServiceRow key={s.id} initial={s} onSave={save} onRemove={remove} />
@@ -323,6 +331,14 @@ function BarbersTab() {
           <Plus className="h-3 w-3" /> Ekle
         </button>
       </div>
+      <div className="mb-2 grid grid-cols-12 gap-2 px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+        <span className="col-span-3">Ad Soyad</span>
+        <span className="col-span-4">Uzmanlıklar</span>
+        <span className="col-span-1">Yıl</span>
+        <span className="col-span-1">Puan</span>
+        <span className="col-span-2">Durum</span>
+        <span className="col-span-1 text-right">İşlem</span>
+      </div>
       <div className="space-y-3">
         {barbers.map((b: any) => (
           <BarberRow key={b.id} initial={b} onSave={save} onRemove={remove} />
@@ -357,23 +373,39 @@ const DAY_NAMES = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cu
 
 function HoursTab() {
   const qc = useQueryClient();
+  const currentWeekStart = useMemo(() => getWeekStartIso(new Date()), []);
+  const currentWeekStartLabel = useMemo(() => {
+    const [y, m, d] = currentWeekStart.split("-");
+    return `${d}-${m}-${y}`;
+  }, [currentWeekStart]);
   const { data: hours = [] } = useQuery({
     queryKey: ["admin-hours"],
     queryFn: async () => (await supabase.from("working_hours").select("*").order("day_of_week")).data ?? [],
+  });
+  const { data: hourOverrides = [] } = useQuery({
+    queryKey: ["admin-hour-overrides", currentWeekStart],
+    queryFn: async () =>
+      (await supabase
+        .from("working_hours_overrides")
+        .select("*")
+        .eq("week_start", currentWeekStart)
+        .order("day_of_week")).data ?? [],
   });
   const { data: holidays = [] } = useQuery({
     queryKey: ["admin-holidays"],
     queryFn: async () => (await supabase.from("holidays").select("*").order("holiday_date")).data ?? [],
   });
   const { data: blocked = [] } = useQuery({
-    queryKey: ["admin-blocked-slots"],
-    queryFn: fetchBlockedSlots,
+    queryKey: ["admin-blocked-slots", currentWeekStart],
+    queryFn: () => fetchBlockedSlots([currentWeekStart]),
   });
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin-hours"] });
+    qc.invalidateQueries({ queryKey: ["admin-hour-overrides"] });
     qc.invalidateQueries({ queryKey: ["admin-holidays"] });
     qc.invalidateQueries({ queryKey: ["working_hours"] });
+    qc.invalidateQueries({ queryKey: ["working_hour_overrides"] });
     qc.invalidateQueries({ queryKey: ["holidays"] });
   };
 
@@ -383,11 +415,31 @@ function HoursTab() {
   };
 
   const updateDay = async (day: number, patch: any) => {
-    const { error } = await supabase.from("working_hours").update(patch).eq("day_of_week", day);
+    const baseRow = hours.find((h: any) => h.day_of_week === day);
+    if (!baseRow) return toast.error("Çalışma saati bulunamadı");
+
+    const payload = {
+      week_start: currentWeekStart,
+      day_of_week: day,
+      open_time: patch.open_time ?? String(baseRow.open_time).slice(0, 5),
+      close_time: patch.close_time ?? String(baseRow.close_time).slice(0, 5),
+      is_closed: typeof patch.is_closed === "boolean" ? patch.is_closed : baseRow.is_closed,
+    };
+
+    const { error } = await supabase
+      .from("working_hours_overrides")
+      .upsert(payload, { onConflict: "week_start,day_of_week" });
     if (error) return toast.error(error.message);
     toast.success("Güncellendi");
     invalidate();
   };
+
+  const effectiveHoursByDay = useMemo(() => {
+    const map = new Map<number, any>();
+    for (const row of hours) map.set(Number(row.day_of_week), row);
+    for (const row of hourOverrides) map.set(Number(row.day_of_week), row);
+    return map;
+  }, [hours, hourOverrides]);
 
   const [holidayInput, setHolidayInput] = useState("");
   const [reasonInput, setReasonInput] = useState("");
@@ -406,28 +458,92 @@ function HoursTab() {
   };
 
   const [selectedDay, setSelectedDay] = useState(1); // Pazartesi varsayılan
+  const [pendingBlockedByDay, setPendingBlockedByDay] = useState<Record<number, Record<string, boolean>>>({});
 
-  const toggleSlot = async (dow: number, time: string, isBlocked: boolean) => {
-    try {
-      if (isBlocked) {
-        await removeBlockedSlot(dow, time);
-      } else {
-        await addBlockedSlot(dow, time);
+  const effectiveBlockedByDay = useMemo(() => {
+    const map: Record<number, Set<string>> = {};
+    for (const item of blocked) {
+      const key = Number(String(item.day_of_week));
+      if (!Number.isNaN(key)) {
+        if (!map[key]) map[key] = new Set();
+        map[key].add(String(item.time_slot).slice(0, 5));
       }
+    }
+    for (const [dow, pending] of Object.entries(pendingBlockedByDay)) {
+      const key = Number(dow);
+      if (!map[key]) map[key] = new Set();
+      for (const [time, shouldBlock] of Object.entries(pending)) {
+        if (shouldBlock) map[key].add(time);
+        else map[key].delete(time);
+      }
+    }
+    return map;
+  }, [blocked, pendingBlockedByDay]);
+
+  const savePendingSlots = async (dow: number) => {
+    const pending = pendingBlockedByDay[dow] ?? {};
+    const entries = Object.entries(pending);
+    if (!entries.length) return;
+
+    try {
+      const nextBlocked = new Set(
+        (blocked ?? [])
+          .filter((b) => b.week_start === currentWeekStart && String(b.day_of_week) === String(dow))
+          .map((b) => String(b.time_slot).slice(0, 5)),
+      );
+      for (const [time, shouldBlock] of entries) {
+        const alreadyBlocked = nextBlocked.has(time);
+        if (shouldBlock === alreadyBlocked) continue;
+        if (shouldBlock) {
+          await addBlockedSlot(currentWeekStart, dow, time);
+          nextBlocked.add(time);
+        } else {
+          await removeBlockedSlot(currentWeekStart, dow, time);
+          nextBlocked.delete(time);
+        }
+      }
+
+      const nextRows = [
+        ...((blocked ?? []).filter((b) => !(b.week_start === currentWeekStart && String(b.day_of_week) === String(dow)))),
+        ...Array.from(nextBlocked).map((time) => ({
+          id: `optimistic-${currentWeekStart}-${dow}-${time}`,
+          week_start: currentWeekStart,
+          day_of_week: String(dow),
+          time_slot: time,
+          created_at: new Date().toISOString(),
+        })),
+      ];
+
+      qc.setQueryData(["blocked_slots"], nextRows);
+      qc.setQueryData(["admin-blocked-slots"], nextRows);
+      setPendingBlockedByDay((prev) => ({ ...prev, [dow]: {} }));
       invalidateBlocked();
     } catch (e: any) {
-      toast.error(e.message ?? "Hata");
+      const message = e?.message ?? "Hata";
+      if (/duplicate key value violates unique constraint/i.test(message)) {
+        invalidateBlocked();
+        return;
+      }
+      toast.error(message);
     }
+  };
+
+  const toggleSlot = async (dow: number, time: string, shouldBlock: boolean) => {
+    setPendingBlockedByDay((prev) => ({
+      ...prev,
+      [dow]: { ...(prev[dow] ?? {}), [time]: shouldBlock },
+    }));
   };
 
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div className="glass-panel rounded-2xl p-6">
-          <h2 className="font-display text-2xl mb-4">Haftalık Çalışma Saatleri</h2>
+          <h2 className="font-display text-2xl mb-4">Bu Haftanın Çalışma Saatleri</h2>
+          <p className="text-xs text-muted-foreground mb-3">Ayarlar yalnızca {currentWeekStartLabel} haftası için geçerlidir.</p>
           <div className="space-y-2">
             {[0, 1, 2, 3, 4, 5, 6].map((dow) => {
-              const row = hours.find((h: any) => h.day_of_week === dow);
+              const row = effectiveHoursByDay.get(dow);
               if (!row) return null;
               return <HoursRow key={dow} row={row} onSave={(patch) => updateDay(dow, patch)} />;
             })}
@@ -455,7 +571,7 @@ function HoursTab() {
 
       <div className="glass-panel rounded-2xl p-6">
         <h2 className="font-display text-2xl mb-4">Slot Bazlı Müsaitlik</h2>
-        <p className="text-sm text-muted-foreground mb-4">Bir gün seçin, o güne ait saatlerden kapatmak istediklerinize tıklayın.</p>
+        <p className="text-sm text-muted-foreground mb-4">Bir gün seçin, o güne ait saatlerden kapatmak istediklerinize tıklayın. Bu ayarlar sadece {currentWeekStartLabel} haftası için geçerlidir.</p>
 
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {DAY_NAMES.map((name, dow) => (
@@ -473,20 +589,24 @@ function HoursTab() {
 
         <SlotGrid
           dow={selectedDay}
-          workingHourRow={hours.find((h: any) => h.day_of_week === selectedDay)}
-          blocked={blocked.filter((b) => b.day_of_week === selectedDay).map((b) => b.time_slot.slice(0, 5))}
+          workingHourRow={effectiveHoursByDay.get(selectedDay)}
+          blocked={Array.from(effectiveBlockedByDay[selectedDay] ?? new Set())}
+          pendingChanges={pendingBlockedByDay[selectedDay] ?? {}}
           onToggle={toggleSlot}
+          onSave={() => savePendingSlots(selectedDay)}
         />
       </div>
     </div>
   );
 }
 
-function SlotGrid({ dow, workingHourRow, blocked, onToggle }: {
+function SlotGrid({ dow, workingHourRow, blocked, pendingChanges, onToggle, onSave }: {
   dow: number;
   workingHourRow: any;
   blocked: string[];
+  pendingChanges: Record<string, boolean>;
   onToggle: (dow: number, time: string, isBlocked: boolean) => void;
+  onSave: () => void | Promise<void>;
 }) {
   if (!workingHourRow) return <p className="text-sm text-muted-foreground">Bu gün için çalışma saati tanımlı değil.</p>;
   if (workingHourRow.is_closed) return <p className="text-sm text-muted-foreground">Bu gün kapalı olarak işaretli.</p>;
@@ -505,25 +625,48 @@ function SlotGrid({ dow, workingHourRow, blocked, onToggle }: {
     return list;
   }, [workingHourRow]);
 
+  const hasPendingChanges = Object.keys(pendingChanges).length > 0;
+
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-      {slots.map((time) => {
-        const isBlocked = blocked.includes(time);
-        return (
+    <>
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        {slots.map((time) => {
+          const isBlocked = blocked.includes(time) || pendingChanges[time] === true;
+
+          const handleClick = () => {
+            const nextBlocked = !isBlocked;
+            onToggle(dow, time, nextBlocked);
+          };
+
+          return (
+            <button
+              key={time}
+              type="button"
+              onClick={handleClick}
+              className={`py-3 rounded-lg border text-sm transition ${
+                isBlocked
+                  ? "border-destructive/40 bg-destructive/10 text-destructive line-through opacity-100"
+                  : "border-gold/40 bg-gold/5 text-foreground hover:border-gold"
+              }`}
+            >
+              {time}
+            </button>
+          );
+        })}
+      </div>
+
+      {hasPendingChanges && (
+        <div className="mt-4 flex justify-end">
           <button
-            key={time}
-            onClick={() => onToggle(dow, time, isBlocked)}
-            className={`py-3 rounded-lg border text-sm transition ${
-              isBlocked
-                ? "border-destructive/40 bg-destructive/10 text-destructive line-through"
-                : "border-gold/40 bg-gold/5 text-foreground hover:border-gold"
-            }`}
+            type="button"
+            onClick={onSave}
+            className="btn-gold px-4 py-2.5 rounded-full text-xs uppercase tracking-widest"
           >
-            {time}
+            Müsaitlikleri Kaydet
           </button>
-        );
-      })}
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
