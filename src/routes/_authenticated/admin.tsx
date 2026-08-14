@@ -31,24 +31,24 @@ function AdminDashboard() {
   return (
     <div className="min-h-screen">
       <Header />
-      <section className="pt-32 pb-16 container-luxe">
-        <div className="flex items-baseline justify-between">
+      <section className="pt-24 sm:pt-32 pb-12 sm:pb-16 container-luxe">
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
           <div>
             <span className="text-xs uppercase tracking-[0.3em] text-gold">Yönetim</span>
-            <h1 className="font-display text-4xl mt-2">Kontrol Paneli</h1>
+            <h1 className="font-display text-3xl sm:text-4xl mt-2">Kontrol Paneli</h1>
           </div>
           
           {canInstall && !isInstalled && (
             <button
               onClick={promptInstall}
-              className="btn-gold px-4 py-2 rounded-full text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-300 hover:opacity-90"
+              className="btn-gold px-4 py-2 rounded-full text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-300 hover:opacity-90 self-start shrink-0"
             >
               <span>📱</span> Panelini Telefona Yükle
             </button>
           )}
         </div>
 
-        <div className="flex gap-2 mt-8 border-b border-border/60 overflow-x-auto">
+        <div className="flex gap-1 sm:gap-2 mt-6 sm:mt-8 border-b border-border/60 overflow-x-auto -mx-1 px-1">
           {TABS.map((tb) => {
             const Icon = tb.icon;
             const active = tab === tb.id;
@@ -66,7 +66,7 @@ function AdminDashboard() {
           })}
         </div>
 
-        <div className="mt-8">
+        <div className="mt-6 sm:mt-8">
           {tab === "appointments" && <AppointmentsTab />}
           {tab === "services" && <ServicesTab />}
           {tab === "barbers" && <BarbersTab />}
@@ -115,18 +115,49 @@ function AppointmentsTab() {
     } catch (e: any) { toast.error(e?.message ?? "Hata"); }
   };
 
+  const revenueLabel = `₺${stats.revenue.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}`;
+
   return (
     <>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-2 w-full max-w-[280px]">
         <Kpi icon={<CalendarDays />} label="Bugünkü Randevu" value={stats.today} />
         <Kpi icon={<Clock />} label="Yaklaşan" value={stats.upcoming} />
         <Kpi icon={<Users />} label="Müşteri" value={stats.customers} />
-        <Kpi icon={<TrendingUp />} label="Ciro" value={`₺${stats.revenue.toFixed(0)}`} accent />
+        <Kpi icon={<TrendingUp />} label="Ciro" value={revenueLabel} accent />
       </div>
 
-      <div className="glass-panel rounded-2xl p-6 mt-8">
-        <h2 className="font-display text-2xl mb-4">Son Randevular</h2>
-        <div className="overflow-x-auto">
+      <div className="glass-panel rounded-2xl p-4 sm:p-6 mt-6 sm:mt-8">
+        <h2 className="font-display text-xl sm:text-2xl mb-4">Son Randevular</h2>
+
+        <div className="md:hidden space-y-3">
+          {appts.slice(0, 30).map((a: any) => (
+            <div key={a.id} className="border border-border/40 rounded-xl p-3 space-y-2">
+              <div className="flex justify-between items-start gap-2">
+                <div>
+                  <div className="text-sm font-medium">{a.customer_name}</div>
+                  <div className="text-xs text-muted-foreground">{a.customer_phone}</div>
+                </div>
+                <StatusBadge status={a.status} />
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span>{a.appointment_date} · {String(a.start_time).slice(0, 5)}</span>
+                <span>{a.barbers?.full_name ?? "—"}</span>
+                <span className="text-gold font-medium">₺{Number(a.total_price).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex gap-3 pt-1">
+                {a.status === "pending" && (
+                  <button onClick={() => setStatus(a.id, "approved")} className="text-xs text-gold hover:underline inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Onayla</button>
+                )}
+                {a.status !== "cancelled" && (
+                  <button onClick={() => setStatus(a.id, "cancelled")} className="text-xs text-destructive hover:underline inline-flex items-center gap-1"><XCircle className="h-3 w-3" /> İptal</button>
+                )}
+              </div>
+            </div>
+          ))}
+          {appts.length === 0 && <p className="py-10 text-center text-muted-foreground text-sm">Henüz randevu yok.</p>}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-widest text-muted-foreground">
               <tr className="border-b border-border/60">
@@ -150,7 +181,7 @@ function AppointmentsTab() {
                     <div className="text-xs text-muted-foreground">{a.customer_phone}</div>
                   </td>
                   <td>{a.barbers?.full_name ?? "—"}</td>
-                  <td className="text-gold">₺{Number(a.total_price).toFixed(0)}</td>
+                  <td className="text-gold">₺{Number(a.total_price).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}</td>
                   <td><StatusBadge status={a.status} /></td>
                   <td className="text-right">
                     {a.status === "pending" && (
@@ -219,7 +250,7 @@ function ServicesTab() {
 
   const create = async () => {
     const { error } = await supabase.from("services").insert({
-      name_tr: "Yeni Hizmet", name_en: "New Service",
+      name_tr: "Yeni Hizmet", name_en: "Yeni Hizmet",
       price: 100, duration_minutes: 30, category: "general", sort_order: services.length,
     });
     if (error) return toast.error(error.message);
@@ -229,20 +260,19 @@ function ServicesTab() {
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-display text-2xl">Hizmetler</h2>
-        <button onClick={create} className="btn-gold px-4 py-2 rounded-full text-xs uppercase tracking-widest inline-flex items-center gap-1">
+    <div className="glass-panel rounded-2xl p-4 sm:p-6">
+      <div className="flex justify-between items-center gap-3 mb-4 sm:mb-6">
+        <h2 className="font-display text-xl sm:text-2xl">Hizmetler</h2>
+        <button onClick={create} className="btn-gold px-3 sm:px-4 py-2 rounded-full text-xs uppercase tracking-widest inline-flex items-center gap-1 shrink-0">
           <Plus className="h-3 w-3" /> Ekle
         </button>
       </div>
-      <div className="mb-2 grid grid-cols-12 gap-2 px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
-        <span className="col-span-3">Ad (TR)</span>
-        <span className="col-span-3">Ad (EN)</span>
+      <div className="hidden md:grid mb-2 grid-cols-12 gap-2 px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+        <span className="col-span-4">Ad</span>
         <span className="col-span-2">Fiyat (TL)</span>
         <span className="col-span-2">Süre (dk)</span>
-        <span className="col-span-1">Durum</span>
-        <span className="col-span-1 text-right">İşlem</span>
+        <span className="col-span-2">Durum</span>
+        <span className="col-span-2 text-right">İşlem</span>
       </div>
       <div className="space-y-3">
         {services.map((s: any) => (
@@ -255,18 +285,45 @@ function ServicesTab() {
 
 function ServiceRow({ initial, onSave, onRemove }: { initial: ServiceEdit; onSave: (s: ServiceEdit) => void; onRemove: (id: string) => void }) {
   const [s, setS] = useState<ServiceEdit>(initial);
+  const inputCls = "w-full bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm";
   return (
-    <div className="grid grid-cols-12 gap-2 items-center border border-border/40 rounded-xl p-3">
-      <input value={s.name_tr} onChange={(e) => setS({ ...s, name_tr: e.target.value })} placeholder="Ad (TR)" className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <input value={s.name_en} onChange={(e) => setS({ ...s, name_en: e.target.value })} placeholder="Ad (EN)" className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <input type="number" value={s.price} onChange={(e) => setS({ ...s, price: Number(e.target.value) })} placeholder="₺" className="col-span-2 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <input type="number" value={s.duration_minutes} onChange={(e) => setS({ ...s, duration_minutes: Number(e.target.value) })} placeholder="dk" className="col-span-2 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <label className="col-span-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <input type="checkbox" checked={s.is_active} onChange={(e) => setS({ ...s, is_active: e.target.checked })} /> Aktif
-      </label>
-      <div className="col-span-1 flex justify-end gap-1">
-        <button onClick={() => onSave(s)} className="p-1.5 text-gold hover:bg-gold/10 rounded"><Save className="h-4 w-4" /></button>
-        <button onClick={() => onRemove(s.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="h-4 w-4" /></button>
+    <div className="border border-border/40 rounded-xl p-3">
+      <div className="flex flex-col gap-3 md:hidden">
+        <div>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Ad</label>
+          <input value={s.name_tr} onChange={(e) => setS({ ...s, name_tr: e.target.value })} placeholder="Hizmet adı" className={inputCls} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Fiyat (TL)</label>
+            <input type="number" value={s.price} onChange={(e) => setS({ ...s, price: Number(e.target.value) })} placeholder="₺" className={inputCls} />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Süre (dk)</label>
+            <input type="number" value={s.duration_minutes} onChange={(e) => setS({ ...s, duration_minutes: Number(e.target.value) })} placeholder="dk" className={inputCls} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" checked={s.is_active} onChange={(e) => setS({ ...s, is_active: e.target.checked })} /> Aktif
+          </label>
+          <div className="flex gap-1">
+            <button onClick={() => onSave(s)} className="p-1.5 text-gold hover:bg-gold/10 rounded"><Save className="h-4 w-4" /></button>
+            <button onClick={() => onRemove(s.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="h-4 w-4" /></button>
+          </div>
+        </div>
+      </div>
+      <div className="hidden md:grid grid-cols-12 gap-2 items-center">
+        <input value={s.name_tr} onChange={(e) => setS({ ...s, name_tr: e.target.value })} placeholder="Ad" className="col-span-4 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
+        <input type="number" value={s.price} onChange={(e) => setS({ ...s, price: Number(e.target.value) })} placeholder="₺" className="col-span-2 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
+        <input type="number" value={s.duration_minutes} onChange={(e) => setS({ ...s, duration_minutes: Number(e.target.value) })} placeholder="dk" className="col-span-2 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
+        <label className="col-span-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <input type="checkbox" checked={s.is_active} onChange={(e) => setS({ ...s, is_active: e.target.checked })} /> Aktif
+        </label>
+        <div className="col-span-2 flex justify-end gap-1">
+          <button onClick={() => onSave(s)} className="p-1.5 text-gold hover:bg-gold/10 rounded"><Save className="h-4 w-4" /></button>
+          <button onClick={() => onRemove(s.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="h-4 w-4" /></button>
+        </div>
       </div>
     </div>
   );
@@ -324,14 +381,14 @@ function BarbersTab() {
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-display text-2xl">Ustalar</h2>
-        <button onClick={create} className="btn-gold px-4 py-2 rounded-full text-xs uppercase tracking-widest inline-flex items-center gap-1">
+    <div className="glass-panel rounded-2xl p-4 sm:p-6">
+      <div className="flex justify-between items-center gap-3 mb-4 sm:mb-6">
+        <h2 className="font-display text-xl sm:text-2xl">Ustalar</h2>
+        <button onClick={create} className="btn-gold px-3 sm:px-4 py-2 rounded-full text-xs uppercase tracking-widest inline-flex items-center gap-1 shrink-0">
           <Plus className="h-3 w-3" /> Ekle
         </button>
       </div>
-      <div className="mb-2 grid grid-cols-12 gap-2 px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+      <div className="hidden md:grid mb-2 grid-cols-12 gap-2 px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
         <span className="col-span-3">Ad Soyad</span>
         <span className="col-span-4">Uzmanlıklar</span>
         <span className="col-span-1">Yıl</span>
@@ -350,18 +407,50 @@ function BarbersTab() {
 
 function BarberRow({ initial, onSave, onRemove }: { initial: BarberEdit; onSave: (b: BarberEdit) => void; onRemove: (id: string) => void }) {
   const [b, setB] = useState<BarberEdit>({ ...initial, specialties: initial.specialties ?? [] });
+  const inputCls = "w-full bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm";
   return (
-    <div className="grid grid-cols-12 gap-2 items-center border border-border/40 rounded-xl p-3">
-      <input value={b.full_name} onChange={(e) => setB({ ...b, full_name: e.target.value })} placeholder="Ad Soyad" className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <input value={b.specialties.join(", ")} onChange={(e) => setB({ ...b, specialties: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} placeholder="Uzmanlıklar (virgülle)" className="col-span-4 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <input type="number" value={b.years_experience} onChange={(e) => setB({ ...b, years_experience: Number(e.target.value) })} placeholder="Yıl" className="col-span-1 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <input type="number" step="0.1" value={b.rating} onChange={(e) => setB({ ...b, rating: Number(e.target.value) })} placeholder="★" className="col-span-1 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
-      <label className="col-span-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <input type="checkbox" checked={b.is_active} onChange={(e) => setB({ ...b, is_active: e.target.checked })} /> Aktif
-      </label>
-      <div className="col-span-1 flex justify-end gap-1">
-        <button onClick={() => onSave(b)} className="p-1.5 text-gold hover:bg-gold/10 rounded"><Save className="h-4 w-4" /></button>
-        <button onClick={() => onRemove(b.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="h-4 w-4" /></button>
+    <div className="border border-border/40 rounded-xl p-3">
+      <div className="flex flex-col gap-3 md:hidden">
+        <div>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Ad Soyad</label>
+          <input value={b.full_name} onChange={(e) => setB({ ...b, full_name: e.target.value })} placeholder="Ad Soyad" className={inputCls} />
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Uzmanlıklar</label>
+          <input value={b.specialties.join(", ")} onChange={(e) => setB({ ...b, specialties: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} placeholder="Virgülle ayırın" className={inputCls} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Yıl</label>
+            <input type="number" value={b.years_experience} onChange={(e) => setB({ ...b, years_experience: Number(e.target.value) })} placeholder="Yıl" className={inputCls} />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Puan</label>
+            <input type="number" step="0.1" value={b.rating} onChange={(e) => setB({ ...b, rating: Number(e.target.value) })} placeholder="★" className={inputCls} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" checked={b.is_active} onChange={(e) => setB({ ...b, is_active: e.target.checked })} /> Aktif
+          </label>
+          <div className="flex gap-1">
+            <button onClick={() => onSave(b)} className="p-1.5 text-gold hover:bg-gold/10 rounded"><Save className="h-4 w-4" /></button>
+            <button onClick={() => onRemove(b.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="h-4 w-4" /></button>
+          </div>
+        </div>
+      </div>
+      <div className="hidden md:grid grid-cols-12 gap-2 items-center">
+        <input value={b.full_name} onChange={(e) => setB({ ...b, full_name: e.target.value })} placeholder="Ad Soyad" className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
+        <input value={b.specialties.join(", ")} onChange={(e) => setB({ ...b, specialties: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} placeholder="Uzmanlıklar (virgülle)" className="col-span-4 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
+        <input type="number" value={b.years_experience} onChange={(e) => setB({ ...b, years_experience: Number(e.target.value) })} placeholder="Yıl" className="col-span-1 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
+        <input type="number" step="0.1" value={b.rating} onChange={(e) => setB({ ...b, rating: Number(e.target.value) })} placeholder="★" className="col-span-1 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm" />
+        <label className="col-span-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <input type="checkbox" checked={b.is_active} onChange={(e) => setB({ ...b, is_active: e.target.checked })} /> Aktif
+        </label>
+        <div className="col-span-1 flex justify-end gap-1">
+          <button onClick={() => onSave(b)} className="p-1.5 text-gold hover:bg-gold/10 rounded"><Save className="h-4 w-4" /></button>
+          <button onClick={() => onRemove(b.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="h-4 w-4" /></button>
+        </div>
       </div>
     </div>
   );
@@ -536,12 +625,12 @@ function HoursTab() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="glass-panel rounded-2xl p-6">
-          <h2 className="font-display text-2xl mb-4">Bu Haftanın Çalışma Saatleri</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="glass-panel rounded-2xl p-4 sm:p-6">
+          <h2 className="font-display text-xl sm:text-2xl mb-3 sm:mb-4">Bu Haftanın Çalışma Saatleri</h2>
           <p className="text-xs text-muted-foreground mb-3">Ayarlar yalnızca {currentWeekStartLabel} haftası için geçerlidir.</p>
-          <div className="space-y-2">
+          <div className="space-y-3 sm:space-y-2">
             {[0, 1, 2, 3, 4, 5, 6].map((dow) => {
               const row = effectiveHoursByDay.get(dow);
               if (!row) return null;
@@ -550,12 +639,12 @@ function HoursTab() {
           </div>
         </div>
 
-        <div className="glass-panel rounded-2xl p-6">
-          <h2 className="font-display text-2xl mb-4 flex items-center gap-2"><CalendarX className="h-5 w-5 text-gold" /> Tatil Günleri</h2>
-          <div className="flex gap-2 mb-4">
-            <input type="date" value={holidayInput} onChange={(e) => setHolidayInput(e.target.value)} className="bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm" />
-            <input value={reasonInput} onChange={(e) => setReasonInput(e.target.value)} placeholder="Sebep (ops.)" className="flex-1 bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm" />
-            <button onClick={addHoliday} className="btn-gold px-3 py-2 rounded-lg text-xs uppercase tracking-widest">Ekle</button>
+        <div className="glass-panel rounded-2xl p-4 sm:p-6">
+          <h2 className="font-display text-xl sm:text-2xl mb-3 sm:mb-4 flex items-center gap-2"><CalendarX className="h-5 w-5 text-gold shrink-0" /> Tatil Günleri</h2>
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <input type="date" value={holidayInput} onChange={(e) => setHolidayInput(e.target.value)} className="bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm w-full sm:w-auto" />
+            <input value={reasonInput} onChange={(e) => setReasonInput(e.target.value)} placeholder="Sebep (ops.)" className="flex-1 bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm min-w-0" />
+            <button onClick={addHoliday} className="btn-gold px-3 py-2 rounded-lg text-xs uppercase tracking-widest shrink-0">Ekle</button>
           </div>
           <ul className="space-y-2">
             {holidays.map((h: any) => (
@@ -569,11 +658,11 @@ function HoursTab() {
         </div>
       </div>
 
-      <div className="glass-panel rounded-2xl p-6">
-        <h2 className="font-display text-2xl mb-4">Slot Bazlı Müsaitlik</h2>
+      <div className="glass-panel rounded-2xl p-4 sm:p-6">
+        <h2 className="font-display text-xl sm:text-2xl mb-3 sm:mb-4">Slot Bazlı Müsaitlik</h2>
         <p className="text-sm text-muted-foreground mb-4">Bir gün seçin, o güne ait saatlerden kapatmak istediklerinize tıklayın. Bu ayarlar sadece {currentWeekStartLabel} haftası için geçerlidir.</p>
 
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <div className="flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-1 px-1">
           {DAY_NAMES.map((name, dow) => (
             <button
               key={dow}
@@ -675,21 +764,43 @@ function HoursRow({ row, onSave }: { row: any; onSave: (patch: any) => void }) {
   const [close, setClose] = useState(String(row.close_time).slice(0, 5));
   const [closed, setClosed] = useState(row.is_closed);
   const changed = open !== String(row.open_time).slice(0, 5) || close !== String(row.close_time).slice(0, 5) || closed !== row.is_closed;
+  const timeInputCls = "w-full bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm disabled:opacity-40";
   return (
-    <div className="grid grid-cols-12 gap-2 items-center">
-      <span className="col-span-3 text-sm">{DAY_NAMES[row.day_of_week]}</span>
-      <input type="time" value={open} onChange={(e) => setOpen(e.target.value)} disabled={closed} className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm disabled:opacity-40" />
-      <input type="time" value={close} onChange={(e) => setClose(e.target.value)} disabled={closed} className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm disabled:opacity-40" />
-      <label className="col-span-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <input type="checkbox" checked={closed} onChange={(e) => setClosed(e.target.checked)} /> Kapalı
-      </label>
-      <button
-        disabled={!changed}
-        onClick={() => onSave({ open_time: open, close_time: close, is_closed: closed })}
-        className="col-span-1 p-1.5 text-gold hover:bg-gold/10 rounded disabled:opacity-30"
-      >
-        <Save className="h-4 w-4" />
-      </button>
+    <div className="border border-border/30 rounded-lg p-3 md:border-0 md:p-0 md:rounded-none">
+      <div className="flex flex-col gap-2 md:hidden">
+        <span className="text-sm font-medium">{DAY_NAMES[row.day_of_week]}</span>
+        <div className="grid grid-cols-2 gap-2">
+          <input type="time" value={open} onChange={(e) => setOpen(e.target.value)} disabled={closed} className={timeInputCls} />
+          <input type="time" value={close} onChange={(e) => setClose(e.target.value)} disabled={closed} className={timeInputCls} />
+        </div>
+        <div className="flex items-center justify-between">
+          <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" checked={closed} onChange={(e) => setClosed(e.target.checked)} /> Kapalı
+          </label>
+          <button
+            disabled={!changed}
+            onClick={() => onSave({ open_time: open, close_time: close, is_closed: closed })}
+            className="p-1.5 text-gold hover:bg-gold/10 rounded disabled:opacity-30"
+          >
+            <Save className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <div className="hidden md:grid grid-cols-12 gap-2 items-center">
+        <span className="col-span-3 text-sm">{DAY_NAMES[row.day_of_week]}</span>
+        <input type="time" value={open} onChange={(e) => setOpen(e.target.value)} disabled={closed} className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm disabled:opacity-40" />
+        <input type="time" value={close} onChange={(e) => setClose(e.target.value)} disabled={closed} className="col-span-3 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-sm disabled:opacity-40" />
+        <label className="col-span-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <input type="checkbox" checked={closed} onChange={(e) => setClosed(e.target.checked)} /> Kapalı
+        </label>
+        <button
+          disabled={!changed}
+          onClick={() => onSave({ open_time: open, close_time: close, is_closed: closed })}
+          className="col-span-1 p-1.5 text-gold hover:bg-gold/10 rounded disabled:opacity-30"
+        >
+          <Save className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -698,10 +809,18 @@ function HoursRow({ row, onSave }: { row: any; onSave: (patch: any) => void }) {
 
 function Kpi({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: React.ReactNode; accent?: boolean }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`glass-panel rounded-2xl p-6 ${accent ? "border-gold/40" : ""}`}>
-      <div className={`h-10 w-10 rounded-lg flex items-center justify-center mb-3 ${accent ? "bg-gold/20 text-gold" : "bg-onyx text-foreground/70"}`}>{icon}</div>
-      <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="font-display text-3xl mt-1">{value}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`glass-panel rounded-xl p-3 aspect-square flex flex-col justify-between min-w-0 overflow-hidden ${accent ? "border-gold/40" : ""}`}
+    >
+      <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 [&>svg]:h-3.5 [&>svg]:w-3.5 ${accent ? "bg-gold/20 text-gold" : "bg-onyx text-foreground/70"}`}>
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[9px] uppercase tracking-wider text-muted-foreground leading-tight truncate">{label}</p>
+        <p className="font-display text-base sm:text-lg mt-0.5 truncate tabular-nums">{value}</p>
+      </div>
     </motion.div>
   );
 }
