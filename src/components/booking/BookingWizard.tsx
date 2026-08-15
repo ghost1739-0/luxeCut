@@ -22,9 +22,21 @@ import barber3 from "@/assets/barber-3.jpg";
 import barber4 from "@/assets/barber-4.jpg";
 const barberImgs = [barber1, barber2, barber3, barber4];
 
+const PHONE_PREFIX = "+90";
+
+function parseLocalPhoneDigits(raw: string): string {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("90") && digits.length > 10) digits = digits.slice(2);
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  return digits.slice(0, 10);
+}
+
 const infoSchema = z.object({
   customer_name: z.string().trim().min(2).max(100),
-  customer_phone: z.string().trim().min(7, "Geçersiz telefon").max(30),
+  customer_phone: z
+    .string()
+    .trim()
+    .regex(/^\+90\d{10}$/, "Geçerli bir telefon numarası girin (10 hane)"),
   customer_email: z.string().trim().email().max(255).or(z.literal("")),
   notes: z.string().max(500).optional(),
 });
@@ -159,7 +171,11 @@ export function BookingWizard() {
     }
   }, [time, availableSlots]);
 
-  const form = useForm<Info>({ resolver: zodResolver(infoSchema), defaultValues: { customer_email: "" } });
+  const form = useForm<Info>({
+    resolver: zodResolver(infoSchema),
+    mode: "onChange",
+    defaultValues: { customer_email: "", customer_phone: PHONE_PREFIX },
+  });
 
   const canNext = () => {
     if (step === 0) return selectedServices.length > 0;
@@ -215,7 +231,7 @@ export function BookingWizard() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
-          className="mt-8 min-h-[300px]"
+          className="mt-8 min-h-75"
         >
           {step === 0 && <StepServices services={services} selected={selectedServices} onToggle={(id) => setSelectedServices((v) => v.includes(id) ? v.filter((x) => x !== id) : [...v, id])} lang={lang} />}
           {step === 1 && <StepBarber barbers={barbers} selected={barberId} onSelect={setBarberId} lang={lang} />}
@@ -421,7 +437,17 @@ function StepTime({ slots, value, onSelect, noBarber }: {
 }
 
 function StepInfo({ form }: { form: ReturnType<typeof useForm<Info>> }) {
-  const { register, formState: { errors } } = form;
+  const { register, formState: { errors }, setValue, watch } = form;
+  const fullPhone = watch("customer_phone") || PHONE_PREFIX;
+  const localPhone = fullPhone.startsWith(PHONE_PREFIX)
+    ? fullPhone.slice(PHONE_PREFIX.length).replace(/\D/g, "")
+    : parseLocalPhoneDigits(fullPhone);
+
+  const updatePhone = (raw: string) => {
+    const local = parseLocalPhoneDigits(raw);
+    setValue("customer_phone", PHONE_PREFIX + local, { shouldValidate: true, shouldDirty: true });
+  };
+
   return (
     <div>
       <h3 className="font-display text-2xl mb-1">Bilgileriniz</h3>
@@ -434,7 +460,25 @@ function StepInfo({ form }: { form: ReturnType<typeof useForm<Info>> }) {
         </label>
         <label className="block">
           <span className="text-xs uppercase tracking-widest text-foreground/70">Telefon *</span>
-          <input {...register("customer_phone")} className="input-wiz" placeholder="+90 5xx xxx xx xx" />
+          <div className="flex mt-2">
+            <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-border bg-onyx/80 text-foreground/70 text-sm font-medium select-none shrink-0">
+              +90
+            </span>
+            <input
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              value={localPhone}
+              onChange={(e) => updatePhone(e.target.value)}
+              onPaste={(e) => {
+                e.preventDefault();
+                updatePhone(e.clipboardData.getData("text"));
+              }}
+              className="input-wiz input-wiz-phone flex-1 rounded-l-none mt-0!"
+              placeholder="5xx xxx xx xx"
+              maxLength={10}
+            />
+          </div>
           {errors.customer_phone && <p className="text-xs text-destructive mt-1">{errors.customer_phone.message}</p>}
         </label>
         <label className="block sm:col-span-2">
@@ -455,6 +499,7 @@ function StepInfo({ form }: { form: ReturnType<typeof useForm<Info>> }) {
           padding: .75rem 1rem; color: var(--foreground); font-size: .95rem;
         }
         .input-wiz:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px oklch(0.78 0.15 82 / .15); }
+        .input-wiz-phone { border-top-left-radius: 0; border-bottom-left-radius: 0; }
       `}</style>
     </div>
   );

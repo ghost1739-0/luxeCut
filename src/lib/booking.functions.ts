@@ -46,7 +46,7 @@ const bookingSchema = z.object({
   barber_id: z.string().uuid().nullable(),
   service_ids: z.array(z.string().uuid()).min(1).max(10),
   customer_name: z.string().trim().min(2).max(100),
-  customer_phone: z.string().trim().min(7).max(30),
+  customer_phone: z.string().trim().regex(/^\+90\d{10}$/),
   customer_email: z.string().trim().email().max(255).nullable(),
   notes: z.string().max(500).nullable(),
   appointment_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
