@@ -257,6 +257,7 @@ export const updateAppointmentStatus = createServerFn({ method: "POST" })
           start_time: updated.start_time,
           total_price: updated.total_price,
           barber_name: (updated as any).barbers?.full_name ?? null,
+          qr_code: updated.qr_code,
         };
         const isApproved = data.status === "approved";
 
