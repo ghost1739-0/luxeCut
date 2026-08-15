@@ -87,11 +87,10 @@ export function customerBookingReceivedMessage(a: ApptSummary) {
 }
 
 export function customerBookingApprovedMessage(a: ApptSummary) {
-  const manageLink = a.qr_code
-    ? `\n\nRandevunuzu görüntülemek/iptal etmek için: https://luxe-cut.vercel.app/randevu-yonet?kod=${a.qr_code}`
-    : "";
+  // undefined veya null ise boş string basmaması için kontrol
+  const code = a.qr_code || "";
 
-  return `Merhaba ${a.customer_name} 👋\n\n✅ Randevunuz onaylandı!\n\n📅 ${formatDateTR(a.appointment_date, a.start_time)}\n✂️ Usta: ${a.barber_name ?? "Fark etmez"}\n💰 Tutar: ₺${Number(a.total_price).toFixed(0)}${manageLink}\n\nSizi bekliyoruz!`;
+  return `Merhaba ${a.customer_name} 👋\n\n✅ Randevunuz onaylandı!\n\n📅 ${formatDateTR(a.appointment_date, a.start_time)}\n✂️ Usta: ${a.barber_name ?? "Fark etmez"}\n💰 Tutar: ₺${Number(a.total_price).toFixed(0)}\n\nRandevunuzu görüntülemek/iptal etmek için: https://luxe-cut.vercel.app/randevu-yonet?kod=${code}\n\nSizi bekliyoruz!`;
 }
 
 export function customerBookingCancelledMessage(a: ApptSummary) {
