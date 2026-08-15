@@ -61,6 +61,7 @@ type ApptSummary = {
   start_time: string;
   total_price: number | string;
   barber_name?: string | null;
+  qr_code?: string | null;
 };
 
 export function bookingCreatedMessage(a: ApptSummary) {
@@ -77,4 +78,26 @@ export function bookingCancelledMessage(a: ApptSummary) {
 
 export function bookingReminderMessage(a: ApptSummary) {
   return `⏰ Yarınki Randevu Hatırlatma\n\n${a.customer_name} • ${a.customer_phone}\nSaat: ${a.start_time.slice(0, 5)}\nUsta: ${a.barber_name ?? "Fark etmez"}\nTutar: ₺${Number(a.total_price).toFixed(0)}`;
+}
+
+// ---- Müşteriye giden mesajlar (aynı olaylar, karşı taraftan bakış) ----
+
+export function customerBookingReceivedMessage(a: ApptSummary) {
+  return `Merhaba ${a.customer_name} 👋\n\nRandevu talebiniz alındı ve onay bekliyor.\n\n📅 ${formatDateTR(a.appointment_date, a.start_time)}\n✂️ Usta: ${a.barber_name ?? "Fark etmez"}\n💰 Tutar: ₺${Number(a.total_price).toFixed(0)}\n\nOnaylandığında size ayrıca haber vereceğiz.`;
+}
+
+export function customerBookingApprovedMessage(a: ApptSummary) {
+  const manageLink = a.qr_code
+    ? `\n\nRandevunuzu görüntülemek/iptal etmek için: https://luxe-cut.vercel.app/randevu-yonet?kod=${a.qr_code}`
+    : "";
+
+  return `Merhaba ${a.customer_name} 👋\n\n✅ Randevunuz onaylandı!\n\n📅 ${formatDateTR(a.appointment_date, a.start_time)}\n✂️ Usta: ${a.barber_name ?? "Fark etmez"}\n💰 Tutar: ₺${Number(a.total_price).toFixed(0)}${manageLink}\n\nSizi bekliyoruz!`;
+}
+
+export function customerBookingCancelledMessage(a: ApptSummary) {
+  return `Merhaba ${a.customer_name},\n\n❌ ${formatDateTR(a.appointment_date, a.start_time)} tarihli randevunuz iptal edildi.\n\nYeni bir randevu almak isterseniz sitemizden tekrar oluşturabilirsiniz.`;
+}
+
+export function customerBookingReminderMessage(a: ApptSummary) {
+  return `Merhaba ${a.customer_name} 👋\n\n⏰ Hatırlatma: yarın saat ${a.start_time.slice(0, 5)}'te randevunuz var.\n\n✂️ Usta: ${a.barber_name ?? "Fark etmez"}\n💰 Tutar: ₺${Number(a.total_price).toFixed(0)}\n\nGörüşmek üzere!`;
 }

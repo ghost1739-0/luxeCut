@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { sendWhatsApp, bookingReminderMessage } from "@/lib/notifications.server";
+import { sendWhatsApp, bookingReminderMessage, customerBookingReminderMessage } from "@/lib/notifications.server";
 
 // Called by pg_cron once per hour. Sends a WhatsApp reminder for every
 // approved appointment happening ~24h from now that hasn't been reminded yet.
@@ -33,17 +33,24 @@ export const Route = createFileRoute("/api/public/hooks/appointment-reminders")(
         const owner = process.env.SHOP_OWNER_WHATSAPP;
         let sent = 0;
         for (const a of appts ?? []) {
+          const summary = {
+            customer_name: a.customer_name,
+            customer_phone: a.customer_phone,
+            appointment_date: a.appointment_date,
+            start_time: a.start_time,
+            total_price: a.total_price,
+            barber_name: (a as any).barbers?.full_name ?? null,
+          };
+          let ok = false;
           if (owner) {
-            const r = await sendWhatsApp(owner, bookingReminderMessage({
-              customer_name: a.customer_name,
-              customer_phone: a.customer_phone,
-              appointment_date: a.appointment_date,
-              start_time: a.start_time,
-              total_price: a.total_price,
-              barber_name: (a as any).barbers?.full_name ?? null,
-            }));
-            if (r.ok) sent++;
+            const r = await sendWhatsApp(owner, bookingReminderMessage(summary));
+            ok = ok || r.ok;
           }
+          if (a.customer_phone) {
+            const r = await sendWhatsApp(a.customer_phone, customerBookingReminderMessage(summary));
+            ok = ok || r.ok;
+          }
+          if (ok) sent++;
           await admin.from("appointments").update({ reminder_sent_at: new Date().toISOString() }).eq("id", a.id);
         }
 

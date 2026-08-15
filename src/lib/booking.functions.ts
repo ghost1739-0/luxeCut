@@ -187,19 +187,23 @@ export const createBooking = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
-    // Fire-and-forget WhatsApp notification to shop owner.
+    // Fire-and-forget WhatsApp notifications — hem berbere hem müşteriye.
     try {
-      const { sendWhatsApp, bookingCreatedMessage } = await import("./notifications.server");
+      const { sendWhatsApp, bookingCreatedMessage, customerBookingReceivedMessage } = await import("./notifications.server");
+      const summary = {
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        appointment_date: data.appointment_date,
+        start_time: data.start_time,
+        total_price: total_price - discount,
+        barber_name: assigned_barber_name,
+      };
       const owner = process.env.SHOP_OWNER_WHATSAPP;
       if (owner) {
-        await sendWhatsApp(owner, bookingCreatedMessage({
-          customer_name: data.customer_name,
-          customer_phone: data.customer_phone,
-          appointment_date: data.appointment_date,
-          start_time: data.start_time,
-          total_price: total_price - discount,
-          barber_name: assigned_barber_name,
-        }));
+        await sendWhatsApp(owner, bookingCreatedMessage(summary));
+      }
+      if (data.customer_phone) {
+        await sendWhatsApp(data.customer_phone, customerBookingReceivedMessage(summary));
       }
     } catch (e) {
       console.warn("[booking] notification failed", e);
@@ -236,22 +240,37 @@ export const updateAppointmentStatus = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    // Notify owner on approve/cancel.
+    // Notify owner + customer on approve/cancel.
     if (data.status === "approved" || data.status === "cancelled") {
       try {
-        const { sendWhatsApp, bookingApprovedMessage, bookingCancelledMessage } = await import("./notifications.server");
+        const {
+          sendWhatsApp,
+          bookingApprovedMessage,
+          bookingCancelledMessage,
+          customerBookingApprovedMessage,
+          customerBookingCancelledMessage,
+        } = await import("./notifications.server");
+        const summary = {
+          customer_name: updated.customer_name,
+          customer_phone: updated.customer_phone,
+          appointment_date: updated.appointment_date,
+          start_time: updated.start_time,
+          total_price: updated.total_price,
+          barber_name: (updated as any).barbers?.full_name ?? null,
+        };
+        const isApproved = data.status === "approved";
+
         const owner = process.env.SHOP_OWNER_WHATSAPP;
         if (owner) {
-          const summary = {
-            customer_name: updated.customer_name,
-            customer_phone: updated.customer_phone,
-            appointment_date: updated.appointment_date,
-            start_time: updated.start_time,
-            total_price: updated.total_price,
-            barber_name: (updated as any).barbers?.full_name ?? null,
-          };
-          const body = data.status === "approved" ? bookingApprovedMessage(summary) : bookingCancelledMessage(summary);
-          await sendWhatsApp(owner, body);
+          const ownerBody = isApproved ? bookingApprovedMessage(summary) : bookingCancelledMessage(summary);
+          await sendWhatsApp(owner, ownerBody);
+        }
+
+        if (updated.customer_phone) {
+          const customerBody = isApproved
+            ? customerBookingApprovedMessage(summary)
+            : customerBookingCancelledMessage(summary);
+          await sendWhatsApp(updated.customer_phone, customerBody);
         }
       } catch (e) {
         console.warn("[admin] notification failed", e);
@@ -274,4 +293,71 @@ export const checkIsAdmin = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     return { isAdmin: !!data };
+  });
+
+// Public: find a single appointment by its verification code (qr_code).
+// No auth required — safe because qr_code is an unguessable UUID and this
+// only ever returns exactly the one matching row, never a list.
+export const findAppointmentByCode = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({ code: z.string().trim().min(4).max(100) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: appt, error } = await supabaseAdmin
+      .from("appointments")
+      .select("id, appointment_date, start_time, end_time, status, total_price, customer_name, barbers(full_name)")
+      .eq("qr_code", data.code)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!appt) throw new Error("Randevu bulunamadı. Kodu kontrol edin.");
+    return appt as {
+      id: string; appointment_date: string; start_time: string; end_time: string;
+      status: string; total_price: number; customer_name: string;
+      barbers: { full_name: string } | null;
+    };
+  });
+
+// Public: cancel the single appointment matching this code. No auth required
+// for the same reason as above — possession of the code is the credential.
+export const cancelAppointmentByCode = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z.object({ code: z.string().trim().min(4).max(100) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: appt, error: findErr } = await supabaseAdmin
+      .from("appointments")
+      .select("id, status, appointment_date, start_time, customer_name, customer_phone, total_price, barbers(full_name)")
+      .eq("qr_code", data.code)
+      .maybeSingle();
+    if (findErr) throw new Error(findErr.message);
+    if (!appt) throw new Error("Randevu bulunamadı. Kodu kontrol edin.");
+    if (appt.status === "cancelled") throw new Error("Bu randevu zaten iptal edilmiş.");
+    if (appt.status === "completed") throw new Error("Tamamlanmış randevu iptal edilemez.");
+
+    const { error: updErr } = await supabaseAdmin
+      .from("appointments")
+      .update({ status: "cancelled" })
+      .eq("id", appt.id);
+    if (updErr) throw new Error(updErr.message);
+
+    try {
+      const { sendWhatsApp, bookingCancelledMessage } = await import("./notifications.server");
+      const owner = process.env.SHOP_OWNER_WHATSAPP;
+      if (owner) {
+        await sendWhatsApp(owner, bookingCancelledMessage({
+          customer_name: appt.customer_name,
+          customer_phone: appt.customer_phone,
+          appointment_date: appt.appointment_date,
+          start_time: appt.start_time,
+          total_price: appt.total_price,
+          barber_name: (appt as any).barbers?.full_name ?? null,
+        }));
+      }
+    } catch (e) {
+      console.warn("[cancelAppointmentByCode] notification failed", e);
+    }
+
+    return { ok: true };
   });

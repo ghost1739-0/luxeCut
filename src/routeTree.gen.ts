@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as RandevuYonetRouteImport } from './routes/randevu-yonet'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as BarbersRouteImport } from './routes/barbers'
@@ -28,6 +29,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RandevuYonetRoute = RandevuYonetRouteImport.update({
+  id: '/randevu-yonet',
+  path: '/randevu-yonet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/barbers': typeof BarbersRoute
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
+  '/randevu-yonet': typeof RandevuYonetRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/barbers': typeof BarbersRoute
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
+  '/randevu-yonet': typeof RandevuYonetRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/barbers': typeof BarbersRoute
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
+  '/randevu-yonet': typeof RandevuYonetRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/barbers'
     | '/book'
     | '/contact'
+    | '/randevu-yonet'
     | '/services'
     | '/sitemap.xml'
     | '/admin'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/barbers'
     | '/book'
     | '/contact'
+    | '/randevu-yonet'
     | '/services'
     | '/sitemap.xml'
     | '/admin'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/barbers'
     | '/book'
     | '/contact'
+    | '/randevu-yonet'
     | '/services'
     | '/sitemap.xml'
     | '/_authenticated/admin'
@@ -150,6 +162,7 @@ export interface RootRouteChildren {
   BarbersRoute: typeof BarbersRoute
   BookRoute: typeof BookRoute
   ContactRoute: typeof ContactRoute
+  RandevuYonetRoute: typeof RandevuYonetRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicHooksAppointmentRemindersRoute: typeof ApiPublicHooksAppointmentRemindersRoute
@@ -169,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/services'
       preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/randevu-yonet': {
+      id: '/randevu-yonet'
+      path: '/randevu-yonet'
+      fullPath: '/randevu-yonet'
+      preLoaderRoute: typeof RandevuYonetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -248,6 +268,7 @@ const rootRouteChildren: RootRouteChildren = {
   BarbersRoute: BarbersRoute,
   BookRoute: BookRoute,
   ContactRoute: ContactRoute,
+  RandevuYonetRoute: RandevuYonetRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicHooksAppointmentRemindersRoute:

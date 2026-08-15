@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getBusySlots, getBusySlotsForDate, createBooking } from "@/lib/booking.functions";
+import { getBusySlots, getBusySlotsForDate, createBooking, findAppointmentByCode, cancelAppointmentByCode } from "@/lib/booking.functions";
 
 export type ServiceRow = {
   id: string;
@@ -194,4 +194,12 @@ export async function removeBlockedSlot(week_start: string, day_of_week: number,
     .eq("day_of_week", String(day_of_week))
     .eq("time_slot", normalized);
   if (error) throw error;
+}
+
+export async function fetchAppointmentByCode(code: string) {
+  return await findAppointmentByCode({ data: { code } });
+}
+
+export async function cancelMyAppointment(code: string) {
+  return await cancelAppointmentByCode({ data: { code } });
 }
