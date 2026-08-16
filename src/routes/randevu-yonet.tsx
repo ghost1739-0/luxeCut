@@ -147,7 +147,9 @@ function ManageAppointmentPage() {
 
 function canStillCancel(appt: ApptResult) {
   if (appt.status === "cancelled" || appt.status === "completed") return false;
-  const apptDateTime = new Date(`${appt.appointment_date}T${appt.start_time}`);
+  // +03:00 sabit ekleniyor ki müşterinin telefon saat dilimi yanlış ayarlı olsa
+  // bile randevu Türkiye saatine göre değerlendirilsin.
+  const apptDateTime = new Date(`${appt.appointment_date}T${appt.start_time}+03:00`);
   const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
   return apptDateTime.getTime() - Date.now() >= TWO_HOURS_MS;
 }

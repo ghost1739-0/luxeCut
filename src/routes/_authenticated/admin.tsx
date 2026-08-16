@@ -86,7 +86,9 @@ function AdminDashboard() {
 // gerçek status alanı değişmez, sadece ekranda böyle davranılır.
 function effectiveStatus(a: any): string {
   if (a.status !== "approved") return a.status;
-  const apptDateTime = new Date(`${a.appointment_date}T${a.start_time}`);
+  // +03:00 sabit ekleniyor ki admin başka bir saat diliminden (örn. yurt dışından)
+  // bağlansa bile randevu Türkiye saatine göre değerlendirilsin.
+  const apptDateTime = new Date(`${a.appointment_date}T${a.start_time}+03:00`);
   return apptDateTime.getTime() < Date.now() ? "completed" : a.status;
 }
 

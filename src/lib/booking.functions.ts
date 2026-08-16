@@ -338,7 +338,10 @@ export const cancelAppointmentByCode = createServerFn({ method: "POST" })
     if (appt.status === "completed") throw new Error("Tamamlanmış randevu iptal edilemez.");
 
     // Randevu saatine 2 saatten az kaldıysa veya randevu saati geçtiyse iptal engellenir.
-    const apptDateTime = new Date(`${appt.appointment_date}T${appt.start_time}`);
+    // NOT: +03:00 sabit ekleniyor çünkü bu kod sunucuda (Vercel, varsayılan UTC saat
+    // dilimi) çalışıyor — saat dilimi belirtilmezse "14:00" UTC sanılır, oysa bu saat
+    // Türkiye (UTC+3) saatidir. Türkiye yaz saati uygulamadığı için sabit +03:00 güvenlidir.
+    const apptDateTime = new Date(`${appt.appointment_date}T${appt.start_time}+03:00`);
     const msUntilAppt = apptDateTime.getTime() - Date.now();
     const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
     if (msUntilAppt < TWO_HOURS_MS) {

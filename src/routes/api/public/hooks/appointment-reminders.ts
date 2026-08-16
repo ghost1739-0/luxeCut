@@ -3,7 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 import { sendWhatsApp, bookingReminderMessage, customerBookingReminderMessage } from "@/lib/notifications.server";
 
 // Called by pg_cron once per hour. Sends a WhatsApp reminder for every
-// approved appointment happening ~24h from now that hasn't been reminded yet.
+// approved appointment happening in the next ~2 hours that hasn't been
+// reminded yet. Saatlik çalıştığı için pencere biraz geniş tutulur (0-2 saat
+// kala) ki hiçbir randevu cron'un çalışma anına denk gelmediği için atlanmasın.
 export const Route = createFileRoute("/api/public/hooks/appointment-reminders")({
   server: {
     handlers: {
@@ -20,19 +22,33 @@ export const Route = createFileRoute("/api/public/hooks/appointment-reminders")(
           { auth: { persistSession: false, autoRefreshToken: false } },
         );
 
-        // Target: appointments on tomorrow's date, approved, not yet reminded.
-        const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        const { data: appts, error } = await admin
+        // Bugün ve yarının randevularını çekip, tam 2 saatlik pencereye
+        // (0 < kalan süre <= 2 saat) girenleri JS tarafında filtreliyoruz —
+        // appointment_date + start_time ayrı sütunlar olduğu için tarih
+        // aritmetiğini burada yapmak, Supabase sorgusunda yapmaktan daha
+        // güvenilir.
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const tomorrowStr = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const { data: candidates, error } = await admin
           .from("appointments")
           .select("id, customer_name, customer_phone, appointment_date, start_time, total_price, reminder_sent_at, barbers(full_name)")
-          .eq("appointment_date", tomorrow)
+          .in("appointment_date", [todayStr, tomorrowStr])
           .eq("status", "approved")
           .is("reminder_sent_at", null);
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
+        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+        const now = Date.now();
+        // NOT: +03:00 sabit ekleniyor — bkz. cancelAppointmentByCode'daki aynı açıklama.
+        const appts = (candidates ?? []).filter((a) => {
+          const apptTime = new Date(`${a.appointment_date}T${a.start_time}+03:00`).getTime();
+          const msUntil = apptTime - now;
+          return msUntil > 0 && msUntil <= TWO_HOURS_MS;
+        });
+
         const owner = process.env.SHOP_OWNER_WHATSAPP;
         let sent = 0;
-        for (const a of appts ?? []) {
+        for (const a of appts) {
           const summary = {
             customer_name: a.customer_name,
             customer_phone: a.customer_phone,
@@ -54,7 +70,7 @@ export const Route = createFileRoute("/api/public/hooks/appointment-reminders")(
           await admin.from("appointments").update({ reminder_sent_at: new Date().toISOString() }).eq("id", a.id);
         }
 
-        return Response.json({ ok: true, checked: appts?.length ?? 0, sent, date: tomorrow });
+        return Response.json({ ok: true, checked: candidates?.length ?? 0, sent });
       },
     },
   },
