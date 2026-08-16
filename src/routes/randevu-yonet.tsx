@@ -117,7 +117,7 @@ function ManageAppointmentPage() {
               <Row label="Tutar" value={`₺${Number(appt.total_price).toFixed(0)}`} />
               <Row label="Durum" value={<StatusText status={appt.status} />} />
 
-              {appt.status !== "cancelled" && appt.status !== "completed" && (
+              {canStillCancel(appt) && (
                 <button
                   onClick={cancel}
                   disabled={cancelling}
@@ -125,6 +125,11 @@ function ManageAppointmentPage() {
                 >
                   {cancelling ? "İptal ediliyor..." : "Randevuyu İptal Et"}
                 </button>
+              )}
+              {appt.status !== "cancelled" && appt.status !== "completed" && !canStillCancel(appt) && (
+                <p className="text-sm text-muted-foreground mt-4">
+                  Randevu saatine 2 saatten az kaldığı için artık siteden iptal edilemez. Değişiklik için lütfen berberi arayın.
+                </p>
               )}
               {appt.status === "cancelled" && (
                 <p className="text-sm text-muted-foreground mt-4 flex items-center gap-2">
@@ -138,6 +143,13 @@ function ManageAppointmentPage() {
       <Footer />
     </div>
   );
+}
+
+function canStillCancel(appt: ApptResult) {
+  if (appt.status === "cancelled" || appt.status === "completed") return false;
+  const apptDateTime = new Date(`${appt.appointment_date}T${appt.start_time}`);
+  const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+  return apptDateTime.getTime() - Date.now() >= TWO_HOURS_MS;
 }
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {

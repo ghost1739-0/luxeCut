@@ -80,6 +80,16 @@ function AdminDashboard() {
 
 /* ----------------- Appointments ----------------- */
 
+// Saati geçmiş ama hâlâ "onaylı" (approved) görünen randevuları, elle bir şey
+// yapmaya gerek kalmadan otomatik olarak "tamamlandı" (completed) sayar —
+// admin panelinde gösterim ve ciro hesaplaması bunu kullanır. Veritabanındaki
+// gerçek status alanı değişmez, sadece ekranda böyle davranılır.
+function effectiveStatus(a: any): string {
+  if (a.status !== "approved") return a.status;
+  const apptDateTime = new Date(`${a.appointment_date}T${a.start_time}`);
+  return apptDateTime.getTime() < Date.now() ? "completed" : a.status;
+}
+
 function AppointmentsTab() {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -99,7 +109,12 @@ function AppointmentsTab() {
 
   const stats = useMemo(() => {
     const todaysAppts = appts.filter((a: any) => a.appointment_date === today);
-    const revenue = appts.filter((a: any) => a.status === "completed" || a.status === "approved")
+    // Ciro sadece GERÇEKTEN tamamlanmış randevulardan hesaplanır: elle "Tamamlandı"
+    // işaretlenenler + saati geçmiş ama hâlâ "onaylı" görünen randevular (bunlar
+    // otomatik olarak tamamlanmış sayılır). Sadece gelecekteki "onaylı" randevular
+    // ciroya dahil edilmez — henüz gerçekleşmediler.
+    const revenue = appts
+      .filter((a: any) => effectiveStatus(a) === "completed")
       .reduce((sum: number, a: any) => sum + Number(a.total_price), 0);
     const upcoming = appts.filter((a: any) => a.appointment_date >= today).length;
     const customers = new Set(appts.map((a: any) => a.customer_phone)).size;
@@ -119,7 +134,7 @@ function AppointmentsTab() {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2 w-full max-w-[280px]">
+      <div className="grid grid-cols-2 gap-2 w-full max-w-70">
         <Kpi icon={<CalendarDays />} label="Bugünkü Randevu" value={stats.today} />
         <Kpi icon={<Clock />} label="Yaklaşan" value={stats.upcoming} />
         <Kpi icon={<Users />} label="Müşteri" value={stats.customers} />
@@ -130,30 +145,33 @@ function AppointmentsTab() {
         <h2 className="font-display text-xl sm:text-2xl mb-4">Son Randevular</h2>
 
         <div className="md:hidden space-y-3">
-          {appts.slice(0, 30).map((a: any) => (
+          {appts.slice(0, 30).map((a: any) => {
+            const eff = effectiveStatus(a);
+            return (
             <div key={a.id} className="border border-border/40 rounded-xl p-3 space-y-2">
               <div className="flex justify-between items-start gap-2">
                 <div>
                   <div className="text-sm font-medium">{a.customer_name}</div>
                   <div className="text-xs text-muted-foreground">{a.customer_phone}</div>
                 </div>
-                <StatusBadge status={a.status} />
+                <StatusBadge status={eff} />
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 <span>{a.appointment_date} · {String(a.start_time).slice(0, 5)}</span>
                 <span>{a.barbers?.full_name ?? "—"}</span>
                 <span className="text-gold font-medium">₺{Number(a.total_price).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}</span>
               </div>
-              <div className="flex gap-3 pt-1">
-                {a.status === "pending" && (
-                  <button onClick={() => setStatus(a.id, "approved")} className="text-xs text-gold hover:underline inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Onayla</button>
-                )}
-                {a.status !== "cancelled" && (
+              {eff !== "completed" && eff !== "cancelled" && (
+                <div className="flex gap-3 pt-1">
+                  {a.status === "pending" && (
+                    <button onClick={() => setStatus(a.id, "approved")} className="text-xs text-gold hover:underline inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Onayla</button>
+                  )}
                   <button onClick={() => setStatus(a.id, "cancelled")} className="text-xs text-destructive hover:underline inline-flex items-center gap-1"><XCircle className="h-3 w-3" /> İptal</button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          ))}
+            );
+          })}
           {appts.length === 0 && <p className="py-10 text-center text-muted-foreground text-sm">Henüz randevu yok.</p>}
         </div>
 
@@ -170,7 +188,9 @@ function AppointmentsTab() {
               </tr>
             </thead>
             <tbody>
-              {appts.slice(0, 30).map((a: any) => (
+              {appts.slice(0, 30).map((a: any) => {
+                const eff = effectiveStatus(a);
+                return (
                 <tr key={a.id} className="border-b border-border/40 hover:bg-onyx/40">
                   <td className="py-3">
                     <div>{a.appointment_date}</div>
@@ -182,17 +202,20 @@ function AppointmentsTab() {
                   </td>
                   <td>{a.barbers?.full_name ?? "—"}</td>
                   <td className="text-gold">₺{Number(a.total_price).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}</td>
-                  <td><StatusBadge status={a.status} /></td>
+                  <td><StatusBadge status={eff} /></td>
                   <td className="text-right">
-                    {a.status === "pending" && (
-                      <button onClick={() => setStatus(a.id, "approved")} className="text-xs text-gold hover:underline mr-3 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Onayla</button>
-                    )}
-                    {a.status !== "cancelled" && (
-                      <button onClick={() => setStatus(a.id, "cancelled")} className="text-xs text-destructive hover:underline inline-flex items-center gap-1"><XCircle className="h-3 w-3" /> İptal</button>
+                    {eff !== "completed" && eff !== "cancelled" && (
+                      <>
+                        {a.status === "pending" && (
+                          <button onClick={() => setStatus(a.id, "approved")} className="text-xs text-gold hover:underline mr-3 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Onayla</button>
+                        )}
+                        <button onClick={() => setStatus(a.id, "cancelled")} className="text-xs text-destructive hover:underline inline-flex items-center gap-1"><XCircle className="h-3 w-3" /> İptal</button>
+                      </>
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {appts.length === 0 && (
                 <tr><td colSpan={6} className="py-10 text-center text-muted-foreground">Henüz randevu yok.</td></tr>
               )}
@@ -833,5 +856,12 @@ function StatusBadge({ status }: { status: string }) {
     cancelled: "bg-red-500/15 text-red-400 border-red-500/30",
     no_show: "bg-gray-500/15 text-gray-400 border-gray-500/30",
   };
-  return <span className={`text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border ${map[status] ?? ""}`}>{status}</span>;
+  const labels: Record<string, string> = {
+    pending: "Bekliyor",
+    approved: "Onaylı",
+    completed: "Tamamlandı",
+    cancelled: "İptal",
+    no_show: "Gelmedi",
+  };
+  return <span className={`text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border ${map[status] ?? ""}`}>{labels[status] ?? status}</span>;
 }

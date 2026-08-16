@@ -337,6 +337,18 @@ export const cancelAppointmentByCode = createServerFn({ method: "POST" })
     if (appt.status === "cancelled") throw new Error("Bu randevu zaten iptal edilmiş.");
     if (appt.status === "completed") throw new Error("Tamamlanmış randevu iptal edilemez.");
 
+    // Randevu saatine 2 saatten az kaldıysa veya randevu saati geçtiyse iptal engellenir.
+    const apptDateTime = new Date(`${appt.appointment_date}T${appt.start_time}`);
+    const msUntilAppt = apptDateTime.getTime() - Date.now();
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+    if (msUntilAppt < TWO_HOURS_MS) {
+      throw new Error(
+        msUntilAppt <= 0
+          ? "Randevu saati geçtiği için iptal edilemez."
+          : "Randevu saatine 2 saatten az kaldığı için iptal edilemez. Lütfen berberi telefonla arayın."
+      );
+    }
+
     const { error: updErr } = await supabaseAdmin
       .from("appointments")
       .update({ status: "cancelled" })
