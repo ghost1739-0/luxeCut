@@ -47,7 +47,6 @@ const dict = {
     "book.email": "E-posta",
     "book.notes": "Notlar",
     "book.success": "Randevunuz Alındı!",
-    "book.success_sub": "Kısa süre içinde SMS ve e-posta ile onay göndereceğiz.",
     "book.qr": "Doğrulama Kodu",
 
     "days.sun": "Pazar",
@@ -103,7 +102,6 @@ const dict = {
     "book.email": "Email",
     "book.notes": "Notes",
     "book.success": "Booking Confirmed!",
-    "book.success_sub": "We'll send SMS and email confirmations shortly.",
     "book.qr": "Verification Code",
 
     "days.sun": "Sunday",

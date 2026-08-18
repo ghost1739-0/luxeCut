@@ -157,10 +157,10 @@ function Home() {
       </section>
 
       {/* BARBERS */}
-      <section className="py-24 bg-onyx/40 border-y border-border/40">
+      <section className="py-16 md:py-24 bg-onyx/40 border-y border-border/40">
         <div className="container-luxe">
           <SectionHeader eyebrow="Ekip" title={t("sec.team")} sub={t("sec.team.sub")} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mt-10 md:mt-16">
             {barbers.map((b, i) => (
               <motion.div
                 key={b.id}
@@ -170,7 +170,7 @@ function Home() {
                 transition={{ delay: i * 0.08 }}
                 className="group"
               >
-                <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+                <div className="relative aspect-square md:aspect-[3/4] overflow-hidden rounded-sm">
                   <img
                     src={barberAvatars[i % barberAvatars.length]}
                     alt={b.full_name}
@@ -178,11 +178,11 @@ function Home() {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-                  <div className="absolute bottom-0 inset-x-0 p-5">
-                    <h3 className="font-display text-2xl text-foreground">{b.full_name}</h3>
-                    <p className="text-sm text-gold mt-1">{b.specialties.join(" · ")}</p>
-                    <div className="flex items-center gap-3 mt-3 text-xs text-foreground/70">
-                      <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-gold text-gold" /> {b.rating}</span>
+                  <div className="absolute bottom-0 inset-x-0 p-2 md:p-5">
+                    <h3 className="font-display text-sm md:text-2xl text-foreground truncate">{b.full_name}</h3>
+                    <p className="text-[10px] md:text-sm text-gold mt-0.5 md:mt-1 line-clamp-1">{b.specialties.join(" · ")}</p>
+                    <div className="flex items-center gap-2 md:gap-3 mt-1 md:mt-3 text-[10px] md:text-xs text-foreground/70">
+                      <span className="flex items-center gap-0.5 md:gap-1"><Star className="h-2.5 w-2.5 md:h-3 md:w-3 fill-gold text-gold" /> {b.rating}</span>
                       <span>· {b.years_experience} yıl</span>
                     </div>
                   </div>
@@ -194,10 +194,10 @@ function Home() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="py-24">
+      <section className="py-12 md:py-24">
         <div className="container-luxe">
           <SectionHeader eyebrow="Yorumlar" title={t("sec.testimonials")} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mt-8 md:mt-16">
             {reviews.map((r: any, i: number) => (
               <motion.div
                 key={r.id}
@@ -205,16 +205,16 @@ function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="glass-panel rounded-sm p-6"
+                className="glass-panel rounded-sm p-3 md:p-6"
               >
-                <div className="flex gap-1 mb-3">
+                <div className="flex gap-0.5 md:gap-1 mb-2 md:mb-3">
                   {Array.from({ length: r.rating }).map((_, k) => (
-                    <Star key={k} className="h-4 w-4 fill-gold text-gold" />
+                    <Star key={k} className="h-3 w-3 md:h-4 md:w-4 fill-gold text-gold" />
                   ))}
                 </div>
-                <p className="text-foreground/85 leading-relaxed italic">"{r.comment}"</p>
-                <p className="text-sm text-gold mt-4">— {r.customer_name}</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm md:text-base text-foreground/85 leading-snug md:leading-relaxed italic line-clamp-3 md:line-clamp-none">"{r.comment}"</p>
+                <p className="text-xs md:text-sm text-gold mt-2 md:mt-4">— {r.customer_name}</p>
+                <p className="hidden sm:block text-xs text-muted-foreground mt-1">
                   Usta: {r.barbers?.full_name ?? "—"}
                   {r.services?.name_tr && ` · Hizmet: ${r.services.name_tr}`}
                 </p>
