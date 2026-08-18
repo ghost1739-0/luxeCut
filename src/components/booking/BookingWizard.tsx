@@ -159,7 +159,8 @@ export function BookingWizard() {
         );
         taken = barbers.length > 0 && barbers.every((b) => busyBarberIds.has(b.id));
       }
-      return { start, end, taken };
+      const past = isSlotPast(date, start);
+      return { start, end, taken: taken || past, past };
     });
 }, [busy, allBusy, barbers, barberId, totalDuration, dayInfo, blockedSlots, date, selectedWeekStart]);
 
@@ -328,15 +329,15 @@ function StepBarber({ barbers, selected, onSelect, lang }: { barbers: BarberRow[
     <div>
       <h3 className="font-display text-2xl mb-1">Usta Seçin</h3>
       <p className="text-sm text-muted-foreground mb-6">Tercih etmediğiniz takdirde ilk uygun usta atanacaktır.</p>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => onSelect(null)}
-          className={`p-4 rounded-xl border text-left ${selected === null ? "border-gold bg-gold/10" : "border-border hover:border-gold/50"}`}
+          className={`col-span-2 lg:col-span-1 p-3 sm:p-4 rounded-xl border text-left ${selected === null ? "border-gold bg-gold/10" : "border-border hover:border-gold/50"}`}
         >
-          <Sparkles className="h-5 w-5 text-gold mb-2" />
-          <p className="font-medium">Fark etmez</p>
-          <p className="text-xs text-muted-foreground mt-1">İlk uygun usta</p>
+          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-gold mb-1 sm:mb-2" />
+          <p className="font-medium text-sm sm:text-base">Fark etmez</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">İlk uygun usta</p>
         </button>
         {barbers.map((b, i) => {
           const active = selected === b.id;
@@ -345,16 +346,14 @@ function StepBarber({ barbers, selected, onSelect, lang }: { barbers: BarberRow[
               key={b.id}
               type="button"
               onClick={() => onSelect(b.id)}
-              className={`p-4 rounded-xl border text-left transition ${active ? "border-gold bg-gold/10" : "border-border hover:border-gold/50"}`}
+              className={`rounded-xl border text-left transition overflow-hidden ${active ? "border-gold bg-gold/10" : "border-border hover:border-gold/50"}`}
             >
-              <div className="flex items-center gap-3">
-                <img src={barberImgs[i % barberImgs.length]} className="h-12 w-12 rounded-full object-cover" alt="" />
-                <div>
-                  <p className="font-medium">{b.full_name}</p>
-                  <p className="text-xs text-gold">★ {b.rating} · {b.years_experience}y</p>
-                </div>
+              <img src={barberImgs[i % barberImgs.length]} className="aspect-square w-full object-cover" alt="" />
+              <div className="p-2 sm:p-3">
+                <p className="font-medium text-xs sm:text-sm truncate">{b.full_name}</p>
+                <p className="text-[10px] sm:text-xs text-gold mt-0.5">★ {b.rating}</p>
+                <p className="hidden sm:block text-xs text-muted-foreground mt-1 line-clamp-2">{lang === "tr" ? b.bio_tr : b.bio_en}</p>
               </div>
-              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{lang === "tr" ? b.bio_tr : b.bio_en}</p>
             </button>
           );
         })}
@@ -364,6 +363,14 @@ function StepBarber({ barbers, selected, onSelect, lang }: { barbers: BarberRow[
 }
 
 function isPast(d: string) { const x = new Date(d); x.setHours(23,59,59); return x.getTime() < Date.now(); }
+
+function isSlotPast(dateIso: string, start: string) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  if (dateIso !== todayIso) return false;
+  const [h, m] = start.split(":").map(Number);
+  const now = new Date();
+  return h * 60 + m < now.getHours() * 60 + now.getMinutes();
+}
 
 function StepDate({ date, onChange, resolveWorkingHour, holidays }: {
   date: string; onChange: (d: string) => void;
@@ -407,7 +414,7 @@ function StepDate({ date, onChange, resolveWorkingHour, holidays }: {
 }
 
 function StepTime({ slots, value, onSelect, noBarber }: {
-  slots: { start: string; end: string; taken: boolean }[];
+  slots: { start: string; end: string; taken: boolean; past?: boolean }[];
   value: string | null;
   onSelect: (t: string) => void;
   noBarber: boolean;
@@ -416,7 +423,7 @@ function StepTime({ slots, value, onSelect, noBarber }: {
     <div>
       <h3 className="font-display text-2xl mb-1">Saat Seçin</h3>
       <p className="text-sm text-muted-foreground mb-6">
-        {noBarber ? "İlk uygun usta seçildi — sadece tüm ustalar dolu olan saatler pasiftir." : "Dolu saatler pasif olarak görüntülenir."}
+        {noBarber ? "İlk uygun usta seçildi — sadece tüm ustalar dolu olan saatler pasiftir." : "Geçmiş ve dolu saatler üstü çizili olarak görüntülenir."}
       </p>
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
         {slots.map((s) => (
@@ -451,7 +458,7 @@ function StepInfo({ form }: { form: ReturnType<typeof useForm<Info>> }) {
   return (
     <div>
       <h3 className="font-display text-2xl mb-1">Bilgileriniz</h3>
-      <p className="text-sm text-muted-foreground mb-6">Randevu onayı için iletişim bilgileriniz.</p>
+      <p className="text-sm text-muted-foreground mb-6">İletişim bilgilerinizi girin.</p>
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="block">
           <span className="text-xs uppercase tracking-widest text-foreground/70">Ad Soyad *</span>
@@ -546,7 +553,6 @@ function SuccessCard({ qr, barberName }: { qr: string; barberName: string | null
       {barberName && (
         <p className="text-gold mt-2 text-sm uppercase tracking-widest">Ustanız: {barberName}</p>
       )}
-      <p className="text-muted-foreground mt-3">Kısa süre içinde SMS ve e-posta ile onay göndereceğiz.</p>
       <div className="mt-8 inline-block p-4 rounded-xl bg-onyx border border-gold/40">
         <p className="text-xs uppercase tracking-widest text-gold mb-1">Doğrulama Kodu</p>
         <p className="font-mono text-sm">{qr.slice(0, 8).toUpperCase()}</p>

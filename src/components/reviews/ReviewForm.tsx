@@ -37,33 +37,33 @@ export function ReviewForm() {
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-6 md:p-8 max-w-2xl mx-auto mt-10">
-      <h3 className="font-display text-2xl mb-1">Deneyiminizi paylaşın</h3>
-      <p className="text-sm text-muted-foreground mb-6">Yıldız verin, usta ve hizmet seçin, birkaç kelime yazın.</p>
+    <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-8 max-w-2xl mx-auto mt-6 md:mt-10">
+      <h3 className="font-display text-lg md:text-2xl mb-1">Deneyiminizi paylaşın</h3>
+      <p className="hidden sm:block text-sm text-muted-foreground mb-6">Yıldız verin, usta ve hizmet seçin, birkaç kelime yazın.</p>
 
-      <div className="flex justify-center gap-1 mb-6">
+      <div className="flex justify-center gap-0.5 md:gap-1 mb-4 md:mb-6">
         {[1, 2, 3, 4, 5].map((n) => (
-          <button key={n} onClick={() => setRating(n)} className="p-1">
-            <Star className={`h-8 w-8 ${n <= rating ? "fill-gold text-gold" : "text-muted-foreground"}`} />
+          <button key={n} onClick={() => setRating(n)} className="p-0.5 md:p-1">
+            <Star className={`h-6 w-6 md:h-8 md:w-8 ${n <= rating ? "fill-gold text-gold" : "text-muted-foreground"}`} />
           </button>
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız *" className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm" />
-        <select value={barberId} onChange={(e) => setBarberId(e.target.value)} required className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm">
-          <option value="">Usta seçin *</option>
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 md:gap-3">
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız *" className="bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm col-span-1" />
+        <select value={barberId} onChange={(e) => setBarberId(e.target.value)} required className="bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm col-span-1">
+          <option value="">Usta *</option>
           {barbers.map((b) => <option key={b.id} value={b.id}>{b.full_name}</option>)}
         </select>
-        <select value={serviceId} onChange={(e) => setServiceId(e.target.value)} className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm sm:col-span-2">
-          <option value="">Hizmet seçin (opsiyonel)</option>
+        <select value={serviceId} onChange={(e) => setServiceId(e.target.value)} className="bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm col-span-2">
+          <option value="">Hizmet (opsiyonel)</option>
           {services.map((s) => <option key={s.id} value={s.id}>{s.name_tr}</option>)}
         </select>
-        <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Yorumunuz..." rows={4} className="bg-transparent border border-border/60 rounded-lg px-3 py-2.5 text-sm sm:col-span-2 resize-none" />
+        <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Yorumunuz..." rows={3} className="bg-transparent border border-border/60 rounded-lg px-3 py-2 text-sm col-span-2 resize-none" />
       </div>
 
-      <button onClick={submit} disabled={submitting} className="btn-gold w-full mt-4 px-6 py-3 rounded-full text-xs uppercase tracking-widest inline-flex items-center justify-center gap-2 disabled:opacity-50">
-        <Send className="h-4 w-4" /> {submitting ? "Gönderiliyor..." : "Yorum Gönder"}
+      <button onClick={submit} disabled={submitting} className="btn-gold w-full mt-3 md:mt-4 px-6 py-2.5 md:py-3 rounded-full text-xs uppercase tracking-widest inline-flex items-center justify-center gap-2 disabled:opacity-50">
+        <Send className="h-3.5 w-3.5 md:h-4 md:w-4" /> {submitting ? "Gönderiliyor..." : "Yorum Gönder"}
       </button>
     </div>
   );
